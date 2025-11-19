@@ -31,13 +31,13 @@ A simple, elegant thermostat card for Home Assistant that displays temperature, 
 
 ### Manual Installation
 
-1. Download `ha-thermostat-card.js`
-2. Copy to `/config/www/ha-thermostat-card/ha-thermostat-card.js`
+1. Download `ha-clim-card.js`
+2. Copy to `/config/www/ha-clim-card/ha-clim-card.js`
 3. Add the resource:
 
 ```yaml
 resources:
-  - url: /local/ha-thermostat-card/ha-thermostat-card.js
+  - url: /local/ha-clim-card/ha-clim-card.js
     type: module
 ```
 
@@ -46,14 +46,14 @@ resources:
 ### Minimal Configuration
 
 ```yaml
-type: custom:ha-thermostat-card
+type: custom:ha-clim-card
 current_temperature_entity: sensor.living_room_temperature
 ```
 
 ### Full Configuration
 
 ```yaml
-type: custom:ha-thermostat-card
+type: custom:ha-clim-card
 
 # Required
 current_temperature_entity: sensor.living_room_temperature
@@ -145,7 +145,7 @@ When the room needs heating, a pulsing "HEATING" badge appears in the top-right 
 This example replaces a complex stack of button-cards with a single thermostat card:
 
 ```yaml
-type: custom:ha-thermostat-card
+type: custom:ha-clim-card
 current_temperature_entity: sensor.th_sal_temperature
 target_temperature_entity: sensor.nr_target_temp_salon
 humidity_entity: sensor.th_sal_humidity
@@ -164,7 +164,7 @@ mode_tap_action:
 ### Basic Thermostat
 
 ```yaml
-type: custom:ha-thermostat-card
+type: custom:ha-clim-card
 current_temperature_entity: sensor.bedroom_temperature
 climate_entity: climate.bedroom
 room_icon: mdi:bed
@@ -173,7 +173,7 @@ room_icon: mdi:bed
 ### With Climate Entity
 
 ```yaml
-type: custom:ha-thermostat-card
+type: custom:ha-clim-card
 current_temperature_entity: sensor.bathroom_temperature
 humidity_entity: sensor.bathroom_humidity
 climate_entity: climate.bathroom
@@ -184,7 +184,7 @@ humidity_high: 70  # Higher threshold for bathroom
 ### Temperature Only
 
 ```yaml
-type: custom:ha-thermostat-card
+type: custom:ha-clim-card
 current_temperature_entity: sensor.garage_temperature
 room_icon: mdi:garage
 show_humidity: false

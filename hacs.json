@@ -1,7 +1,7 @@
 {
   "name": "Thermostat Card",
   "render_readme": true,
-  "filename": "ha-thermostat-card.js",
+  "filename": "ha-clim-card.js",
   "homeassistant": "2025.1.0",
   "content_in_root": true
 }

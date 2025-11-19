@@ -94,7 +94,7 @@
   }
 
   static getConfigElement() {
-    return document.createElement('ha-thermostat-card-editor');
+    return document.createElement('ha-clim-card-editor');
   }
 
   static getStubConfig() {
@@ -1118,17 +1118,17 @@ class HaThermostatCardEditor extends LitElement {
 // REGISTER CUSTOM ELEMENTS
 // ============================================================================
 
-  customElements.define('ha-thermostat-card', HaThermostatCard);
-  customElements.define('ha-thermostat-card-editor', HaThermostatCardEditor);
+  customElements.define('ha-clim-card', HaThermostatCard);
+  customElements.define('ha-clim-card-editor', HaThermostatCardEditor);
 
   // Register with Home Assistant
   window.customCards = window.customCards || [];
   window.customCards.push({
-    type: 'ha-thermostat-card',
+    type: 'ha-clim-card',
     name: 'Thermostat Card',
     description: 'A simple thermostat card showing temperature, humidity, and heating status',
     preview: true,
-    documentationURL: 'https://github.com/yourusername/ha-thermostat-card'
+    documentationURL: 'https://github.com/yourusername/ha-clim-card'
   });
 
 })();
