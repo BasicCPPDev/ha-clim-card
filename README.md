@@ -2,6 +2,12 @@
 
 A simple, elegant thermostat card for Home Assistant that displays temperature, humidity, valve status, and heating mode in a compact format.
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+
+## Screenshot
+
+![HA Thermostat Card](images/screenshot.png)
+
 ## Features
 
 - **Current Temperature** - Large, prominent display with room icon
