@@ -113,15 +113,48 @@ temperature_unit: '°C'
 | `icon_active_color` | string | `#48c9b0` | Room icon color when presence detected |
 | `icon_inactive_color` | string | `#0e6251` | Room icon color when no presence |
 | `temperature_unit` | string | `°C` | Temperature unit to display |
-| `mode_tap_action` | object | - | Custom action when tapping mode (navigate, call-service, etc.) |
+| `mode_tap_action` | object | - | Custom action when tapping mode button |
+| `mode_hold_action` | object | - | Custom action when holding mode button (500ms) |
+| `mode_double_tap_action` | object | - | Custom action when double-tapping mode button |
 
 ## Interactions
 
 - **Tap current temperature** - Opens more-info dialog for temperature sensor
 - **Tap target temperature** - Opens more-info for target sensor or climate entity
 - **Tap humidity** - Opens more-info dialog for humidity sensor
-- **Tap valve icon** - Opens more-info dialog for valve entity
-- **Tap mode** - Opens more-info dialog for climate entity (allows control)
+- **Tap mode button** - Executes `mode_tap_action` or opens more-info
+- **Hold mode button** - Executes `mode_hold_action` (500ms hold)
+- **Double-tap mode button** - Executes `mode_double_tap_action`
+
+## Action Types
+
+Supported action types for mode button:
+
+| Action | Description |
+|--------|-------------|
+| `fire-dom-event` | Fire DOM event (for browser_mod popups) |
+| `more-info` | Show entity more-info dialog |
+| `call-service` | Call a Home Assistant service |
+| `navigate` | Navigate to a path |
+| `toggle` | Toggle an entity |
+| `url` | Open external URL |
+| `none` | Do nothing |
+
+### Example with browser_mod popup
+
+```yaml
+mode_tap_action:
+  action: fire-dom-event
+  browser_mod:
+    service: browser_mod.popup
+    data:
+      title: "Thermostat Control"
+      content:
+        type: entities
+        entities:
+          - input_select.heater_mode
+          - input_boolean.heater_boost
+```
 
 ## Humidity Colors
 

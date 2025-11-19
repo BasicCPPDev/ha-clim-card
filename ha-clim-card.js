@@ -550,7 +550,8 @@ console.info(
     }
 
     .target-temp {
-      font-size: 1.8em;
+      font-size: 1.3em;
+      color: #ffc107;
     }
 
     .humidity {
@@ -559,7 +560,7 @@ console.info(
       gap: 2px;
       cursor: pointer;
       transition: opacity 0.2s;
-      font-size: 1.5em;
+      font-size: 1.3em;
     }
 
     .humidity:hover {
