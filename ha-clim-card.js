@@ -421,7 +421,7 @@ console.info(
     }
 
     ha-card {
-      padding: 8px 12px;
+      padding: 4px 8px;
       background: var(--card-background-color, #1c1c1c);
       border-radius: var(--ha-card-border-radius, 12px);
       position: relative;
@@ -434,7 +434,7 @@ console.info(
       border-color: #ff9800;
     }
 
-    .card-content {
+    .clim-content {
       display: flex;
       flex-direction: column;
     }
@@ -485,11 +485,11 @@ console.info(
     }
 
     .valve-icon {
-      --mdc-icon-size: 18px;
+      --mdc-icon-size: 24px;
     }
 
     .target-temp {
-      font-size: 1.1em;
+      font-size: 1.8em;
     }
 
     .humidity {
@@ -498,7 +498,7 @@ console.info(
       gap: 2px;
       cursor: pointer;
       transition: opacity 0.2s;
-      font-size: 0.9em;
+      font-size: 1.8em;
     }
 
     .humidity:hover {
@@ -506,12 +506,11 @@ console.info(
     }
 
     .humidity-icon {
-      --mdc-icon-size: 18px;
+      --mdc-icon-size: 24px;
     }
 
     .humidity-value {
       font-weight: 500;
-      font-size: 1.1em;
     }
 
     /* Body row */
@@ -523,7 +522,7 @@ console.info(
     }
 
     .current-temp {
-      font-size: 40px;
+      font-size: 45px;
       font-weight: 500;
       color: var(--primary-text-color, #fff);
       cursor: pointer;
@@ -664,7 +663,7 @@ console.info(
 
     return html`
       <ha-card class="${heatingNeeded ? 'heating-needed' : ''}">
-        <div class="card-content">
+        <div class="clim-content">
           <!-- Header row: Room info, Target temp with valve, Humidity -->
           <div class="header-row">
             <div class="room-info">
