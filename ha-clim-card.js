@@ -33,6 +33,10 @@ console.info(
   constructor() {
     super();
     this._dialogOpen = false;
+    this._holdTimer = null;
+    this._lastTap = 0;
+    this._tapCount = 0;
+    this._tapTimer = null;
   }
 
   // --------------------------------------------------------------------------
@@ -86,6 +90,8 @@ console.info(
 
       // Actions
       mode_tap_action: config.mode_tap_action || null,
+      mode_hold_action: config.mode_hold_action || null,
+      mode_double_tap_action: config.mode_double_tap_action || null,
 
       ...config
     };
@@ -324,9 +330,55 @@ console.info(
     }
   }
 
-  _handleModeTap(e) {
+  _handleModePointerDown(e) {
     e.stopPropagation();
 
+    // Start hold timer
+    this._holdTimer = setTimeout(() => {
+      this._holdTimer = null;
+      if (this.config.mode_hold_action) {
+        this._performAction(this.config.mode_hold_action);
+      }
+    }, 500);
+  }
+
+  _handleModePointerUp(e) {
+    e.stopPropagation();
+
+    // If hold timer is still active, it wasn't a hold
+    if (this._holdTimer) {
+      clearTimeout(this._holdTimer);
+      this._holdTimer = null;
+
+      // Handle tap/double-tap
+      this._tapCount++;
+
+      if (this._tapTimer) {
+        clearTimeout(this._tapTimer);
+      }
+
+      this._tapTimer = setTimeout(() => {
+        if (this._tapCount >= 2 && this.config.mode_double_tap_action) {
+          // Double tap
+          this._performAction(this.config.mode_double_tap_action);
+        } else {
+          // Single tap
+          this._handleModeTap(e);
+        }
+        this._tapCount = 0;
+        this._tapTimer = null;
+      }, 250);
+    }
+  }
+
+  _handleModePointerCancel(e) {
+    if (this._holdTimer) {
+      clearTimeout(this._holdTimer);
+      this._holdTimer = null;
+    }
+  }
+
+  _handleModeTap(e) {
     // Check for custom tap action first
     if (this.config.mode_tap_action) {
       this._performAction(this.config.mode_tap_action);
@@ -383,6 +435,15 @@ console.info(
         break;
 
       case 'none':
+        break;
+
+      case 'fire-dom-event':
+        const domEvent = new Event('ll-custom', {
+          bubbles: true,
+          composed: true,
+        });
+        domEvent.detail = action;
+        this.dispatchEvent(domEvent);
         break;
 
       default:
@@ -498,7 +559,7 @@ console.info(
       gap: 2px;
       cursor: pointer;
       transition: opacity 0.2s;
-      font-size: 1.8em;
+      font-size: 1.5em;
     }
 
     .humidity:hover {
@@ -717,7 +778,10 @@ console.info(
             ${this.config.show_mode && mode ? html`
               <button
                 class="mode-button ${modeButtonClass}"
-                @click=${this._handleModeTap}
+                @pointerdown=${this._handleModePointerDown}
+                @pointerup=${this._handleModePointerUp}
+                @pointercancel=${this._handleModePointerCancel}
+                @pointerleave=${this._handleModePointerCancel}
               >
                 <ha-icon icon="${modeIcon}"></ha-icon>
                 ${mode}
