@@ -12,14 +12,46 @@
  */
 
 (async () => {
-  // Wait for Home Assistant elements to be available
-  while (!customElements.get('hui-view')) {
-    await new Promise(resolve => setTimeout(resolve, 100));
+  // Wait for Home Assistant Lovelace to be available
+  const waitForElement = async (selector, timeout = 10000) => {
+    const start = Date.now();
+    while (!customElements.get(selector)) {
+      if (Date.now() - start > timeout) {
+        return false;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return true;
+  };
+
+  // Wait for HA core elements
+  await waitForElement('home-assistant');
+
+  // Wait for Lovelace view element
+  const huiAvailable = await waitForElement('hui-view');
+  if (!huiAvailable) {
+    console.error('ha-clim-card: Timeout waiting for hui-view element');
+    return;
   }
 
   // Get Lit from Home Assistant's bundle
-  const LitElement = Object.getPrototypeOf(customElements.get('hui-view'));
+  const haElement = customElements.get('hui-view') ||
+                    customElements.get('hui-masonry-view') ||
+                    customElements.get('hc-lovelace');
+
+  if (!haElement) {
+    console.error('ha-clim-card: Could not find Home Assistant Lit element');
+    return;
+  }
+
+  const LitElement = Object.getPrototypeOf(haElement);
   const { html, css } = LitElement.prototype;
+
+  console.info(
+    '%c  HA-CLIM-CARD  %c  v1.0.0 Loaded  ',
+    'color: cyan; font-weight: bold; background: black',
+    'color: white; font-weight: bold; background: dimgray'
+  );
 
   // ============================================================================
   // MAIN CARD COMPONENT
