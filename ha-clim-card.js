@@ -426,78 +426,49 @@ console.info(
       border-radius: var(--ha-card-border-radius, 12px);
       position: relative;
       overflow: hidden;
+      border: 2px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+
+    ha-card.heating-needed {
+      border-color: #ff9800;
     }
 
     .card-content {
       display: flex;
       flex-direction: column;
-      gap: 4px;
     }
 
-    /* Top row: room icon, current temp, humidity */
-    .top-row {
+    /* Header row */
+    .header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--divider-color, #333);
     }
 
-    .left-section {
+    .room-info {
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
     .room-icon {
-      --mdc-icon-size: 28px;
-      color: var(--primary-color, #4caf50);
+      --mdc-icon-size: 24px;
+      color: var(--primary-color, #ff9800);
     }
 
-    .current-temp {
-      font-size: 2.2em;
+    .room-name {
+      font-size: 1em;
       font-weight: 500;
       color: var(--primary-text-color, #fff);
-      cursor: pointer;
-      transition: opacity 0.2s;
-      line-height: 1;
     }
 
-    .current-temp:hover {
-      opacity: 0.8;
-    }
-
-    .right-section {
+    .header-center {
       display: flex;
       align-items: center;
-      gap: 4px;
-    }
-
-    .humidity {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      font-size: 1.1em;
-    }
-
-    .humidity:hover {
-      opacity: 0.8;
-    }
-
-    .humidity-icon {
-      --mdc-icon-size: 20px;
-    }
-
-    .humidity-value {
-      font-weight: 500;
-    }
-
-    /* Bottom row: target temp, valve, mode */
-    .bottom-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 2px;
+      gap: 12px;
     }
 
     .target-section {
@@ -514,90 +485,104 @@ console.info(
     }
 
     .target-icon {
-      --mdc-icon-size: 20px;
-    }
-
-    .target-temp {
-      font-size: 1.1em;
-    }
-
-    .mode-section {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .valve-status {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .valve-status:hover {
-      opacity: 0.8;
+      --mdc-icon-size: 16px;
     }
 
     .valve-icon {
-      --mdc-icon-size: 18px;
+      --mdc-icon-size: 14px;
     }
 
-    .valve-open {
-      color: var(--success-color, #4caf50);
+    .target-temp {
+      font-size: 0.9em;
     }
 
-    .valve-closed {
-      color: var(--disabled-text-color, #666);
-    }
-
-    .mode {
-      font-size: 1.1em;
-      font-weight: 600;
-      color: var(--info-color, #2196f3);
+    .humidity {
+      display: flex;
+      align-items: center;
+      gap: 2px;
       cursor: pointer;
       transition: opacity 0.2s;
-      text-transform: uppercase;
+      font-size: 0.9em;
     }
 
-    .mode:hover {
+    .humidity:hover {
       opacity: 0.8;
     }
 
-    .mode.heat {
-      color: var(--error-color, #f44336);
+    .humidity-icon {
+      --mdc-icon-size: 16px;
     }
 
-    .mode.cool {
-      color: var(--info-color, #2196f3);
+    .humidity-value {
+      font-weight: 500;
     }
 
-    .mode.off {
-      color: var(--disabled-text-color, #666);
+    /* Body row */
+    .body-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
     }
 
-    .mode.auto {
-      color: var(--success-color, #4caf50);
+    .current-temp {
+      font-size: 2em;
+      font-weight: 500;
+      color: var(--primary-text-color, #fff);
+      cursor: pointer;
+      transition: opacity 0.2s;
+      line-height: 1;
     }
 
-    .mode.heating {
-      color: var(--error-color, #f44336);
+    .current-temp:hover {
+      opacity: 0.8;
     }
 
-    .mode.idle {
-      color: var(--warning-color, #ff9800);
+    /* Mode button */
+    .mode-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #4caf50;
+      color: #fff;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      border: none;
     }
 
-    /* Heating needed badge */
-    .heating-badge {
-      position: absolute;
-      top: -2px;
-      left: 38px;
-      color: #ff9800;
-      z-index: 10;
+    .mode-button:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
     }
 
-    .heating-badge ha-icon {
-      filter: drop-shadow(0 0 2px rgba(255, 152, 0, 0.5));
+    .mode-button.boost {
+      background: #ff9800;
+    }
+
+    .mode-button.manual {
+      background: #ffc107;
+      color: #000;
+    }
+
+    .mode-button.off {
+      background: #666;
+    }
+
+    .mode-button.heat {
+      background: #f44336;
+    }
+
+    .mode-button.cool {
+      background: #2196f3;
+    }
+
+    .mode-button ha-icon {
+      --mdc-icon-size: 16px;
     }
 
     /* Unavailable state */
@@ -609,6 +594,55 @@ console.info(
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
+
+  _getModeButtonClass() {
+    // Check boost first
+    if (this.config.boost_entity) {
+      const boostState = this._getState(this.config.boost_entity);
+      if (boostState === 'on') return 'boost';
+    }
+
+    // Check mode entity
+    if (this.config.mode_entity) {
+      const mode = this._getState(this.config.mode_entity);
+      if (mode) {
+        switch (mode.toLowerCase()) {
+          case 'off': return 'off';
+          case 'auto': return 'auto';
+          case 'manual': return 'manual';
+        }
+      }
+    }
+
+    // Fall back to climate mode
+    const climateMode = this._getClimateMode();
+    if (climateMode) {
+      switch (climateMode.toLowerCase()) {
+        case 'heat':
+        case 'heating': return 'heat';
+        case 'cool':
+        case 'cooling': return 'cool';
+        case 'off': return 'off';
+      }
+    }
+
+    return 'auto';
+  }
+
+  _getModeIcon() {
+    const mode = this._getModeDisplay();
+    switch (mode) {
+      case 'BOOST': return 'mdi:fire';
+      case 'AUTO': return 'mdi:autorenew';
+      case 'MAN': return 'mdi:hand-back-right';
+      case 'OFF': return 'mdi:power';
+      case 'HEAT':
+      case 'HEATING': return 'mdi:fire';
+      case 'COOL':
+      case 'COOLING': return 'mdi:snowflake';
+      default: return 'mdi:thermostat';
+    }
+  }
 
   render() {
     if (!this.hass || !this.config) {
@@ -624,33 +658,46 @@ console.info(
     const roomIconColor = this._getRoomIconColor();
     const valveIcon = this._getValveIcon();
     const valveColor = this._getValveColor();
-    const modeColor = this._getModeColor();
+    const modeButtonClass = this._getModeButtonClass();
+    const modeIcon = this._getModeIcon();
 
     return html`
-      <ha-card>
-        ${heatingNeeded ? html`<div class="heating-badge">
-          <ha-icon icon="mdi:fire" style="--mdc-icon-size: 16px;"></ha-icon>
-        </div>` : ''}
-
+      <ha-card class="${heatingNeeded ? 'heating-needed' : ''}">
         <div class="card-content">
-          <!-- Top row: Icon, Current Temp, Humidity -->
-          <div class="top-row">
-            <div class="left-section">
+          <!-- Header row: Room info, Target temp with valve, Humidity -->
+          <div class="header-row">
+            <div class="room-info">
               <ha-icon
                 class="room-icon"
                 icon="${this.config.room_icon}"
                 style="color: ${roomIconColor}"
               ></ha-icon>
-              <span
-                class="current-temp ${currentTemp === '--' ? 'unavailable' : ''}"
-                @click=${this._handleTemperatureTap}
-              >
-                ${currentTemp}${this.config.temperature_unit}
-              </span>
+              <span class="room-name">${this.config.room_name || ''}</span>
             </div>
 
-            ${this.config.show_humidity && this.config.humidity_entity ? html`
-              <div class="right-section">
+            <div class="header-center">
+              ${this.config.show_target && (this.config.target_temperature_entity || this.config.climate_entity) ? html`
+                <div
+                  class="target-section"
+                  @click=${this._handleTargetTap}
+                >
+                  <ha-icon
+                    class="valve-icon"
+                    icon="${valveIcon}"
+                    style="color: ${valveColor}"
+                  ></ha-icon>
+                  <ha-icon
+                    class="target-icon"
+                    icon="mdi:thermometer"
+                    style="color: var(--secondary-text-color, #aaa)"
+                  ></ha-icon>
+                  <span class="target-temp">
+                    ${targetTemp !== '--' ? targetTemp : this._getClimateTargetTemp()}${this.config.temperature_unit}
+                  </span>
+                </div>
+              ` : ''}
+
+              ${this.config.show_humidity && this.config.humidity_entity ? html`
                 <div
                   class="humidity"
                   @click=${this._handleHumidityTap}
@@ -659,41 +706,28 @@ console.info(
                   <ha-icon class="humidity-icon" icon="mdi:water-percent"></ha-icon>
                   <span class="humidity-value">${humidity}%</span>
                 </div>
-              </div>
-            ` : ''}
+              ` : ''}
+            </div>
           </div>
 
-          <!-- Bottom row: Target Temp, Valve, Mode -->
-          <div class="bottom-row">
-            <div class="left-section">
-              ${this.config.show_target && (this.config.target_temperature_entity || this.config.climate_entity) ? html`
-                <div
-                  class="target-section"
-                  @click=${this._handleTargetTap}
-                >
-                  <ha-icon
-                    class="target-icon valve-icon"
-                    icon="${valveIcon}"
-                    style="color: ${valveColor}"
-                  ></ha-icon>
-                  <span class="target-temp">
-                    ${targetTemp !== '--' ? targetTemp : this._getClimateTargetTemp()}${this.config.temperature_unit}
-                  </span>
-                </div>
-              ` : ''}
-            </div>
+          <!-- Body row: Current temp, Mode button -->
+          <div class="body-row">
+            <span
+              class="current-temp ${currentTemp === '--' ? 'unavailable' : ''}"
+              @click=${this._handleTemperatureTap}
+            >
+              ${currentTemp}${this.config.temperature_unit}
+            </span>
 
-            <div class="mode-section">
-              ${this.config.show_mode && mode ? html`
-                <span
-                  class="mode"
-                  style="color: ${modeColor}"
-                  @click=${this._handleModeTap}
-                >
-                  ${mode}
-                </span>
-              ` : ''}
-            </div>
+            ${this.config.show_mode && mode ? html`
+              <button
+                class="mode-button ${modeButtonClass}"
+                @click=${this._handleModeTap}
+              >
+                <ha-icon icon="${modeIcon}"></ha-icon>
+                ${mode}
+              </button>
+            ` : ''}
           </div>
         </div>
       </ha-card>
