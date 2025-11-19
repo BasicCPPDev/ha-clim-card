@@ -421,7 +421,7 @@ console.info(
     }
 
     ha-card {
-      padding: 12px 16px;
+      padding: 8px 12px;
       background: var(--card-background-color, #1c1c1c);
       border-radius: var(--ha-card-border-radius, 12px);
       position: relative;
@@ -444,7 +444,7 @@ console.info(
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
       border-bottom: 1px solid var(--divider-color, #333);
     }
 
@@ -460,7 +460,7 @@ console.info(
     }
 
     .room-name {
-      font-size: 1.1em;
+      font-size: 1.2em;
       font-weight: 500;
       color: var(--primary-text-color, #fff);
     }
@@ -489,7 +489,7 @@ console.info(
     }
 
     .target-temp {
-      font-size: 1em;
+      font-size: 1.1em;
     }
 
     .humidity {
@@ -511,7 +511,7 @@ console.info(
 
     .humidity-value {
       font-weight: 500;
-      font-size: 1em;
+      font-size: 1.1em;
     }
 
     /* Body row */
@@ -519,7 +519,7 @@ console.info(
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 12px;
+      padding-top: 8px;
     }
 
     .current-temp {
@@ -540,16 +540,20 @@ console.info(
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
+      padding: 10px 16px;
       border-radius: 8px;
       background: #4caf50;
       color: #fff;
-      font-size: 0.95em;
+      font-size: 1.05em;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
       text-transform: uppercase;
       border: none;
+    }
+
+    .mode-button ha-icon {
+      --mdc-icon-size: 18px;
     }
 
     .mode-button:hover {
