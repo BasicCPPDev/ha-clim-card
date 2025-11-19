@@ -11,13 +11,21 @@
  * - Tap actions for more-info dialogs
  */
 
-import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
+(async () => {
+  // Wait for Home Assistant elements to be available
+  while (!customElements.get('hui-view')) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
 
-// ============================================================================
-// MAIN CARD COMPONENT
-// ============================================================================
+  // Get Lit from Home Assistant's bundle
+  const LitElement = Object.getPrototypeOf(customElements.get('hui-view'));
+  const { html, css } = LitElement.prototype;
 
-class HaThermostatCard extends LitElement {
+  // ============================================================================
+  // MAIN CARD COMPONENT
+  // ============================================================================
+
+  class HaThermostatCard extends LitElement {
   static properties = {
     hass: { attribute: false },
     config: { attribute: false },
@@ -1110,15 +1118,17 @@ class HaThermostatCardEditor extends LitElement {
 // REGISTER CUSTOM ELEMENTS
 // ============================================================================
 
-customElements.define('ha-thermostat-card', HaThermostatCard);
-customElements.define('ha-thermostat-card-editor', HaThermostatCardEditor);
+  customElements.define('ha-thermostat-card', HaThermostatCard);
+  customElements.define('ha-thermostat-card-editor', HaThermostatCardEditor);
 
-// Register with Home Assistant
-window.customCards = window.customCards || [];
-window.customCards.push({
-  type: 'ha-thermostat-card',
-  name: 'Thermostat Card',
-  description: 'A simple thermostat card showing temperature, humidity, and heating status',
-  preview: true,
-  documentationURL: 'https://github.com/yourusername/ha-thermostat-card'
-});
+  // Register with Home Assistant
+  window.customCards = window.customCards || [];
+  window.customCards.push({
+    type: 'ha-thermostat-card',
+    name: 'Thermostat Card',
+    description: 'A simple thermostat card showing temperature, humidity, and heating status',
+    preview: true,
+    documentationURL: 'https://github.com/yourusername/ha-thermostat-card'
+  });
+
+})();
