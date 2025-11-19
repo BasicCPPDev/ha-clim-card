@@ -11,51 +11,17 @@
  * - Tap actions for more-info dialogs
  */
 
-(async () => {
-  // Wait for Home Assistant Lovelace to be available
-  const waitForElement = async (selector, timeout = 10000) => {
-    const start = Date.now();
-    while (!customElements.get(selector)) {
-      if (Date.now() - start > timeout) {
-        return false;
-      }
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    return true;
-  };
+import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
 
-  // Wait for HA core elements
-  await waitForElement('home-assistant');
+console.info(
+  '%c  HA-CLIM-CARD  %c  v1.0.0 Loaded  ',
+  'color: cyan; font-weight: bold; background: black',
+  'color: white; font-weight: bold; background: dimgray'
+);
 
-  // Wait for Lovelace view element
-  const huiAvailable = await waitForElement('hui-view');
-  if (!huiAvailable) {
-    console.error('ha-clim-card: Timeout waiting for hui-view element');
-    return;
-  }
-
-  // Get Lit from Home Assistant's bundle
-  const haElement = customElements.get('hui-view') ||
-                    customElements.get('hui-masonry-view') ||
-                    customElements.get('hc-lovelace');
-
-  if (!haElement) {
-    console.error('ha-clim-card: Could not find Home Assistant Lit element');
-    return;
-  }
-
-  const LitElement = Object.getPrototypeOf(haElement);
-  const { html, css } = LitElement.prototype;
-
-  console.info(
-    '%c  HA-CLIM-CARD  %c  v1.0.0 Loaded  ',
-    'color: cyan; font-weight: bold; background: black',
-    'color: white; font-weight: bold; background: dimgray'
-  );
-
-  // ============================================================================
-  // MAIN CARD COMPONENT
-  // ============================================================================
+// ============================================================================
+// MAIN CARD COMPONENT
+// ============================================================================
 
   class HaThermostatCard extends LitElement {
   static properties = {
@@ -1150,17 +1116,15 @@ class HaThermostatCardEditor extends LitElement {
 // REGISTER CUSTOM ELEMENTS
 // ============================================================================
 
-  customElements.define('ha-clim-card', HaThermostatCard);
-  customElements.define('ha-clim-card-editor', HaThermostatCardEditor);
+customElements.define('ha-clim-card', HaThermostatCard);
+customElements.define('ha-clim-card-editor', HaThermostatCardEditor);
 
-  // Register with Home Assistant
-  window.customCards = window.customCards || [];
-  window.customCards.push({
-    type: 'ha-clim-card',
-    name: 'Thermostat Card',
-    description: 'A simple thermostat card showing temperature, humidity, and heating status',
-    preview: true,
-    documentationURL: 'https://github.com/yourusername/ha-clim-card'
-  });
-
-})();
+// Register with Home Assistant
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: 'ha-clim-card',
+  name: 'Climate Card',
+  description: 'A simple thermostat card showing temperature, humidity, and heating status',
+  preview: true,
+  documentationURL: 'https://github.com/yourusername/ha-clim-card'
+});
