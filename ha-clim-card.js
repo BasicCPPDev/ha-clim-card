@@ -455,12 +455,12 @@ console.info(
     }
 
     .room-icon {
-      --mdc-icon-size: 24px;
+      --mdc-icon-size: 28px;
       color: var(--primary-color, #ff9800);
     }
 
     .room-name {
-      font-size: 1em;
+      font-size: 1.1em;
       font-weight: 500;
       color: var(--primary-text-color, #fff);
     }
@@ -484,16 +484,12 @@ console.info(
       opacity: 0.8;
     }
 
-    .target-icon {
-      --mdc-icon-size: 16px;
-    }
-
     .valve-icon {
-      --mdc-icon-size: 14px;
+      --mdc-icon-size: 18px;
     }
 
     .target-temp {
-      font-size: 0.9em;
+      font-size: 1em;
     }
 
     .humidity {
@@ -510,11 +506,12 @@ console.info(
     }
 
     .humidity-icon {
-      --mdc-icon-size: 16px;
+      --mdc-icon-size: 18px;
     }
 
     .humidity-value {
       font-weight: 500;
+      font-size: 1em;
     }
 
     /* Body row */
@@ -526,7 +523,7 @@ console.info(
     }
 
     .current-temp {
-      font-size: 2em;
+      font-size: 40px;
       font-weight: 500;
       color: var(--primary-text-color, #fff);
       cursor: pointer;
@@ -543,11 +540,11 @@ console.info(
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 8px;
       background: #4caf50;
       color: #fff;
-      font-size: 0.85em;
+      font-size: 0.95em;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
@@ -685,11 +682,6 @@ console.info(
                     class="valve-icon"
                     icon="${valveIcon}"
                     style="color: ${valveColor}"
-                  ></ha-icon>
-                  <ha-icon
-                    class="target-icon"
-                    icon="mdi:thermometer"
-                    style="color: var(--secondary-text-color, #aaa)"
                   ></ha-icon>
                   <span class="target-temp">
                     ${targetTemp !== '--' ? targetTemp : this._getClimateTargetTemp()}${this.config.temperature_unit}
