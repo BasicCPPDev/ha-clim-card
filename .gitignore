@@ -1,13 +1,13 @@
-node_modules/
+# Test files
+test.html
+*.png
+
+# OS files
 .DS_Store
-.env
-.env.local
-*.log
-dist/
-build/
-.vscode/
+Thumbs.db
+
+# IDE
 .idea/
+.vscode/
 *.swp
 *.swo
-*~
-.cache/
