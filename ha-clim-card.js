@@ -584,7 +584,7 @@ console.info(
       gap: 6px;
       padding: 10px 16px;
       border-radius: 8px;
-      background: #1b5e20; /* Very dark green for dark mode */
+      background: #132F09; /* Very dark green for dark mode */
       color: #fff;
       font-size: 1.05em;
       font-weight: 600;
@@ -695,7 +695,7 @@ console.info(
       padding: 6px 10px; /* 20% smaller */
       font-size: 0.76em; /* 20% smaller (0.95em * 0.8) */
       gap: 3px;
-      background: #0d4016; /* Even darker green */
+      background: #132F09; /* Even darker green */
     }
 
     ha-card.compact .mode-button ha-icon {
