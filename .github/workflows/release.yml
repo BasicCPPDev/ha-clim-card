@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+          - patch  # 2.0.0 -> 2.0.1
+          - minor  # 2.0.0 -> 2.1.0
+          - major  # 2.0.0 -> 3.0.0
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if release needed
+        id: check_release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version_type=${{ inputs.version_type }}" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "✅ Manual release triggered: ${{ inputs.version_type }}"
+          else
+            # Check commit message for release keywords
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            echo "Commit message: $COMMIT_MSG"
+
+            if echo "$COMMIT_MSG" | grep -qiE '\[release:major\]|\[major\]'; then
+              echo "version_type=major" >> $GITHUB_OUTPUT
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "✅ Auto release: MAJOR"
+            elif echo "$COMMIT_MSG" | grep -qiE '\[release:minor\]|\[minor\]'; then
+              echo "version_type=minor" >> $GITHUB_OUTPUT
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "✅ Auto release: MINOR"
+            elif echo "$COMMIT_MSG" | grep -qiE '\[release:patch\]|\[patch\]'; then
+              echo "version_type=patch" >> $GITHUB_OUTPUT
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "✅ Auto release: PATCH"
+            else
+              echo "should_release=false" >> $GITHUB_OUTPUT
+              echo "⏭️  No release keyword found, skipping"
+            fi
+          fi
+
+      - name: Configure Git
+        if: steps.check_release.outputs.should_release == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get current version
+        if: steps.check_release.outputs.should_release == 'true'
+        id: get_version
+        run: |
+          # Get latest tag or default to v2.0.0
+          CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v2.0.0")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Bump version
+        if: steps.check_release.outputs.should_release == 'true'
+        id: bump_version
+        run: |
+          CURRENT="${{ steps.get_version.outputs.current_version }}"
+          # Remove 'v' prefix
+          CURRENT=${CURRENT#v}
+
+          IFS='.' read -r major minor patch <<< "$CURRENT"
+
+          case "${{ steps.check_release.outputs.version_type }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+
+          NEW_VERSION="v${major}.${minor}.${patch}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update version in files
+        if: steps.check_release.outputs.should_release == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+
+          # Update version in ha-clim-card.js
+          sed -i "s/v[0-9]\+\.[0-9]\+\.[0-9]\+/${NEW_VERSION}/g" ha-clim-card.js
+
+          # Update hacs.json if it exists
+          if [ -f "hacs.json" ]; then
+            sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${NEW_VERSION}\"/g" hacs.json
+          fi
+
+          echo "✅ Updated version to ${NEW_VERSION}"
+
+      - name: Commit changes
+        if: steps.check_release.outputs.should_release == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          git add ha-clim-card.js hacs.json 2>/dev/null || git add ha-clim-card.js
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: bump version to ${NEW_VERSION}"
+            echo "✅ Committed version bump"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_release.outputs.should_release == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+
+          # Create annotated tag
+          git tag -a "${NEW_VERSION}" -m "Release ${NEW_VERSION}"
+
+          # Push commit and tag
+          git push origin main || git push origin master
+          git push origin "${NEW_VERSION}"
+
+          echo "✅ Created and pushed tag ${NEW_VERSION}"
+
+      - name: Create GitHub Release
+        if: steps.check_release.outputs.should_release == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.bump_version.outputs.new_version }}
+          release_name: Release ${{ steps.bump_version.outputs.new_version }}
+          body: |
+            ## Release ${{ steps.bump_version.outputs.new_version }}
+
+            **Version Type:** ${{ steps.check_release.outputs.version_type }}
+
+            ### Installation
+            Install via HACS or download `ha-clim-card.js` and add to your Home Assistant configuration.
+
+            See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for usage instructions.
+          draft: false
+          prerelease: false
