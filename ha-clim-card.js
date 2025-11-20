@@ -14,7 +14,7 @@
 import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
 
 console.info(
-  '%c  HA-CLIM-CARD  %c  v1.0.0 Loaded  ',
+  '%c  HA-CLIM-CARD  %c  v2.0.0 Loaded  ',
   'color: cyan; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray'
 );
@@ -48,26 +48,23 @@ console.info(
       throw new Error('Invalid configuration');
     }
 
-    // Validate required entities - either single entity or individual entities
-    if (!config.entity && !config.current_temperature_entity) {
-      throw new Error('You need to define either "entity" or "current_temperature_entity"');
+    // Validate required entity
+    if (!config.entity) {
+      throw new Error('You need to define "entity" (template sensor with all attributes)');
+    }
+
+    // Set humidity thresholds with defaults
+    const humidity_low = config.humidity_low !== undefined ? config.humidity_low : 40;
+    const humidity_high = config.humidity_high !== undefined ? config.humidity_high : 70;
+
+    // Validate humidity thresholds
+    if (humidity_high <= humidity_low) {
+      throw new Error('humidity_high must be greater than humidity_low');
     }
 
     this.config = {
-      // Single entity mode (optional)
-      entity: config.entity || null,
-
-      // Entity configurations
-      current_temperature_entity: config.current_temperature_entity,
-      target_temperature_entity: config.target_temperature_entity || null,
-      humidity_entity: config.humidity_entity || null,
-      valve_entity: config.valve_entity || null,
-      climate_entity: config.climate_entity || null,
-      heating_needed_entity: config.heating_needed_entity || null,
-      heating_needed: config.heating_needed || null,
-      presence_entity: config.presence_entity || null,
-      mode_entity: config.mode_entity || null,
-      boost_entity: config.boost_entity || null,
+      // Single entity mode (required)
+      entity: config.entity,
 
       // Display options
       room_icon: config.room_icon || 'mdi:sofa',
@@ -79,8 +76,8 @@ console.info(
       show_heating_badge: config.show_heating_badge !== false,
 
       // Humidity color thresholds
-      humidity_low: config.humidity_low || 30,
-      humidity_high: config.humidity_high || 60,
+      humidity_low: humidity_low,
+      humidity_high: humidity_high,
 
       // Colors
       humidity_low_color: config.humidity_low_color || '#ff9800',
@@ -107,10 +104,7 @@ console.info(
 
   static getStubConfig() {
     return {
-      current_temperature_entity: 'sensor.temperature',
-      target_temperature_entity: 'sensor.target_temperature',
-      humidity_entity: 'sensor.humidity',
-      climate_entity: 'climate.thermostat',
+      entity: 'sensor.living_room_thermostat',
       room_icon: 'mdi:sofa',
       room_name: 'Living Room'
     };
@@ -121,24 +115,16 @@ console.info(
   // --------------------------------------------------------------------------
 
   _getRoomIconColor() {
-    if (!this.config.presence_entity) {
+    const presence = this._getEntityAttribute('presence');
+    if (!presence) {
       return this.config.icon_active_color;
     }
-    const state = this._getState(this.config.presence_entity);
-    return state === 'on' ? this.config.icon_active_color : this.config.icon_inactive_color;
+    return presence === 'on' ? this.config.icon_active_color : this.config.icon_inactive_color;
   }
 
   _getValveIcon() {
-    let state;
-
-    // Entity mode: read from attributes
-    if (this.config.entity) {
-      state = this._getEntityAttribute('valve');
-      if (state === null || state === undefined) return 'mdi:valve-closed';
-    } else {
-      if (!this.config.valve_entity) return 'mdi:valve-closed';
-      state = this._getState(this.config.valve_entity);
-    }
+    const state = this._getEntityAttribute('valve');
+    if (state === null || state === undefined) return 'mdi:valve-closed';
 
     // Handle numeric valve position
     const pos = parseFloat(state);
@@ -154,16 +140,8 @@ console.info(
   }
 
   _getValveColor() {
-    let state;
-
-    // Entity mode: read from attributes
-    if (this.config.entity) {
-      state = this._getEntityAttribute('valve');
-      if (state === null || state === undefined) return 'var(--disabled-text-color, #666)';
-    } else {
-      if (!this.config.valve_entity) return 'var(--disabled-text-color, #666)';
-      state = this._getState(this.config.valve_entity);
-    }
+    const state = this._getEntityAttribute('valve');
+    if (state === null || state === undefined) return 'var(--disabled-text-color, #666)';
 
     const pos = parseFloat(state);
     if (!isNaN(pos)) {
@@ -178,78 +156,35 @@ console.info(
   }
 
   _getModeDisplay() {
-    // Entity mode: read from attributes
-    if (this.config.entity) {
-      const boost = this._getEntityAttribute('boost');
-      if (boost === 'on' || boost === true || boost === 'true') return 'BOOST';
+    const boost = this._getEntityAttribute('boost');
+    if (boost === 'on' || boost === true || boost === 'true') return 'BOOST';
 
-      const mode = this._getEntityAttribute('mode');
-      if (mode) {
-        switch (mode.toLowerCase()) {
-          case 'off': return 'OFF';
-          case 'auto': return 'AUTO';
-          case 'manual': return 'MAN';
-          default: return mode.toUpperCase();
-        }
-      }
-      return '';
-    }
-
-    // Legacy mode: check individual entities
-    // Check boost first
-    if (this.config.boost_entity) {
-      const boostState = this._getState(this.config.boost_entity);
-      if (boostState === 'on') return 'BOOST';
-    }
-
-    // Check mode entity (input_select)
-    if (this.config.mode_entity) {
-      const mode = this._getState(this.config.mode_entity);
-      if (mode) {
-        switch (mode.toLowerCase()) {
-          case 'off': return 'OFF';
-          case 'auto': return 'AUTO';
-          case 'manual': return 'MAN';
-          default: return mode.toUpperCase();
-        }
+    const mode = this._getEntityAttribute('mode');
+    if (mode) {
+      switch (mode.toLowerCase()) {
+        case 'off': return 'OFF';
+        case 'auto': return 'AUTO';
+        case 'manual': return 'MAN';
+        default: return mode.toUpperCase();
       }
     }
-
-    // Fall back to climate entity
-    return this._getClimateMode() || '';
+    return '';
   }
 
   _getModeColor() {
     // Check boost first
-    if (this.config.boost_entity) {
-      const boostState = this._getState(this.config.boost_entity);
-      if (boostState === 'on') return '#ff9800'; // Orange
+    const boost = this._getEntityAttribute('boost');
+    if (boost === 'on' || boost === true || boost === 'true') {
+      return '#ff9800'; // Orange
     }
 
-    // Check mode entity
-    if (this.config.mode_entity) {
-      const mode = this._getState(this.config.mode_entity);
-      if (mode) {
-        switch (mode.toLowerCase()) {
-          case 'off': return '#808080'; // Grey
-          case 'auto': return '#808000'; // Olive
-          case 'manual': return '#ffff00'; // Yellow
-          default: return 'var(--primary-text-color)';
-        }
-      }
-    }
-
-    // Fall back to climate mode colors
-    const climateMode = this._getClimateMode();
-    if (climateMode) {
-      switch (climateMode.toLowerCase()) {
-        case 'heat':
-        case 'heating': return 'var(--error-color, #f44336)';
-        case 'cool':
-        case 'cooling': return 'var(--info-color, #2196f3)';
-        case 'off': return 'var(--disabled-text-color, #666)';
-        case 'auto': return 'var(--success-color, #4caf50)';
-        case 'idle': return 'var(--warning-color, #ff9800)';
+    // Check mode
+    const mode = this._getEntityAttribute('mode');
+    if (mode) {
+      switch (mode.toLowerCase()) {
+        case 'off': return '#808080'; // Grey
+        case 'auto': return '#808000'; // Olive
+        case 'manual': return '#ffff00'; // Yellow
         default: return 'var(--primary-text-color)';
       }
     }
@@ -287,41 +222,30 @@ console.info(
   }
 
   _getCurrentTemp() {
-    if (this.config.entity) {
-      // Entity mode: current temp is the state
-      const state = this._getState(this.config.entity);
-      if (state && state !== 'unavailable' && state !== 'unknown') {
-        const num = parseFloat(state);
-        return isNaN(num) ? '--' : num.toFixed(1);
-      }
-      return '--';
+    const state = this._getState(this.config.entity);
+    if (state && state !== 'unavailable' && state !== 'unknown') {
+      const num = parseFloat(state);
+      return isNaN(num) ? '--' : num.toFixed(1);
     }
-    // Legacy mode: use current_temperature_entity
-    return this._getNumericState(this.config.current_temperature_entity);
+    return '--';
   }
 
   _getTargetTemp() {
-    if (this.config.entity) {
-      const target = this._getEntityAttribute('target_temp');
-      if (target !== null && target !== undefined) {
-        const num = parseFloat(target);
-        return isNaN(num) ? '--' : num.toFixed(1);
-      }
-      return '--';
+    const target = this._getEntityAttribute('target_temp');
+    if (target !== null && target !== undefined) {
+      const num = parseFloat(target);
+      return isNaN(num) ? '--' : num.toFixed(1);
     }
-    return this._getNumericState(this.config.target_temperature_entity);
+    return '--';
   }
 
   _getHumidity() {
-    if (this.config.entity) {
-      const humidity = this._getEntityAttribute('humidity');
-      if (humidity !== null && humidity !== undefined) {
-        const num = parseFloat(humidity);
-        return isNaN(num) ? '--' : num.toFixed(0);
-      }
-      return '--';
+    const humidity = this._getEntityAttribute('humidity');
+    if (humidity !== null && humidity !== undefined) {
+      const num = parseFloat(humidity);
+      return isNaN(num) ? '--' : num.toFixed(0);
     }
-    return this._getNumericState(this.config.humidity_entity, 0);
+    return '--';
   }
 
   _getRoomIconFromEntity() {
@@ -340,77 +264,16 @@ console.info(
     return this.config.room_name || '';
   }
 
-  _getClimateMode() {
-    if (!this.config.climate_entity || !this.hass) return null;
-    const climate = this.hass.states[this.config.climate_entity];
-    if (!climate) return null;
-
-    // Check hvac_action first (actual current action)
-    const action = climate.attributes.hvac_action;
-    if (action) {
-      return action.toUpperCase();
-    }
-
-    // Fall back to hvac_mode (set mode)
-    return climate.state ? climate.state.toUpperCase() : null;
-  }
-
   _isHeatingNeeded() {
     if (!this.config.show_heating_badge) return false;
 
-    // Entity mode: read from attributes
-    if (this.config.entity) {
-      const heatingNeeded = this._getEntityAttribute('heating_needed');
-      if (heatingNeeded !== null && heatingNeeded !== undefined) {
-        return heatingNeeded === true || heatingNeeded === 'true' || heatingNeeded === 'on' || heatingNeeded === '1';
-      }
-      return false;
+    const heatingNeeded = this._getEntityAttribute('heating_needed');
+    if (heatingNeeded !== null && heatingNeeded !== undefined) {
+      return heatingNeeded === true || heatingNeeded === 'true' || heatingNeeded === 'on' || heatingNeeded === '1';
     }
-
-    // Check if custom JavaScript expression is specified
-    if (this.config.heating_needed && this.hass) {
-      try {
-        // Evaluate the expression with access to states object
-        const states = this.hass.states;
-        const condition = new Function('states', `return ${this.config.heating_needed}`);
-        return condition(states);
-      } catch (e) {
-        console.error('ha-clim-card: Error evaluating heating_needed expression:', e);
-        return false;
-      }
-    }
-
-    // Check dedicated heating_needed entity (simple on/off check)
-    if (this.config.heating_needed_entity) {
-      const state = this._getState(this.config.heating_needed_entity);
-      return state === 'on' || state === 'true' || state === '1';
-    }
-
-    // Fall back to checking climate hvac_action
-    if (this.config.climate_entity && this.hass) {
-      const climate = this.hass.states[this.config.climate_entity];
-      if (climate && climate.attributes.hvac_action === 'heating') {
-        return true;
-      }
-    }
-
     return false;
   }
 
-  _isValveOpen() {
-    if (!this.config.valve_entity) return null;
-    const state = this._getState(this.config.valve_entity);
-
-    // Handle boolean entities
-    if (state === 'on' || state === 'open' || state === 'true') return true;
-    if (state === 'off' || state === 'closed' || state === 'false') return false;
-
-    // Handle numeric entities (valve position > 0 means open)
-    const num = parseFloat(state);
-    if (!isNaN(num)) return num > 0;
-
-    return null;
-  }
 
   // --------------------------------------------------------------------------
   // Humidity Color Calculation
@@ -436,22 +299,17 @@ console.info(
 
   _handleTemperatureTap(e) {
     e.stopPropagation();
-    this._showMoreInfo(this.config.current_temperature_entity);
+    this._showMoreInfo(this.config.entity);
   }
 
   _handleTargetTap(e) {
     e.stopPropagation();
-    const entity = this.config.target_temperature_entity || this.config.climate_entity;
-    if (entity) {
-      this._showMoreInfo(entity);
-    }
+    this._showMoreInfo(this.config.entity);
   }
 
   _handleHumidityTap(e) {
     e.stopPropagation();
-    if (this.config.humidity_entity) {
-      this._showMoreInfo(this.config.humidity_entity);
-    }
+    this._showMoreInfo(this.config.entity);
   }
 
   _handleModePointerDown(e) {
@@ -509,11 +367,8 @@ console.info(
       return;
     }
 
-    // Fall back to more-info for mode entity or climate entity
-    const entity = this.config.mode_entity || this.config.climate_entity;
-    if (entity) {
-      this._showMoreInfo(entity);
-    }
+    // Fall back to more-info for main entity
+    this._showMoreInfo(this.config.entity);
   }
 
   _performAction(action) {
@@ -575,13 +430,6 @@ console.info(
         if (action.entity) {
           this._showMoreInfo(action.entity);
         }
-    }
-  }
-
-  _handleValveTap(e) {
-    e.stopPropagation();
-    if (this.config.valve_entity) {
-      this._showMoreInfo(this.config.valve_entity);
     }
   }
 
@@ -783,32 +631,18 @@ console.info(
 
   _getModeButtonClass() {
     // Check boost first
-    if (this.config.boost_entity) {
-      const boostState = this._getState(this.config.boost_entity);
-      if (boostState === 'on') return 'boost';
+    const boost = this._getEntityAttribute('boost');
+    if (boost === 'on' || boost === true || boost === 'true') {
+      return 'boost';
     }
 
-    // Check mode entity
-    if (this.config.mode_entity) {
-      const mode = this._getState(this.config.mode_entity);
-      if (mode) {
-        switch (mode.toLowerCase()) {
-          case 'off': return 'off';
-          case 'auto': return 'auto';
-          case 'manual': return 'manual';
-        }
-      }
-    }
-
-    // Fall back to climate mode
-    const climateMode = this._getClimateMode();
-    if (climateMode) {
-      switch (climateMode.toLowerCase()) {
-        case 'heat':
-        case 'heating': return 'heat';
-        case 'cool':
-        case 'cooling': return 'cool';
+    // Check mode
+    const mode = this._getEntityAttribute('mode');
+    if (mode) {
+      switch (mode.toLowerCase()) {
         case 'off': return 'off';
+        case 'auto': return 'auto';
+        case 'manual': return 'manual';
       }
     }
 
@@ -864,7 +698,7 @@ console.info(
             </div>
 
             <div class="header-center">
-              ${this.config.show_target && (this.config.entity || this.config.target_temperature_entity || this.config.climate_entity) ? html`
+              ${this.config.show_target ? html`
                 <div
                   class="target-section"
                   @click=${this._handleTargetTap}
@@ -875,12 +709,12 @@ console.info(
                     style="color: ${valveColor}"
                   ></ha-icon>
                   <span class="target-temp">
-                    ${targetTemp !== '--' ? targetTemp : this._getClimateTargetTemp()}${this.config.temperature_unit}
+                    ${targetTemp}${this.config.temperature_unit}
                   </span>
                 </div>
               ` : ''}
 
-              ${this.config.show_humidity && (this.config.entity || this.config.humidity_entity) ? html`
+              ${this.config.show_humidity ? html`
                 <div
                   class="humidity"
                   @click=${this._handleHumidityTap}
@@ -918,15 +752,6 @@ console.info(
         </div>
       </ha-card>
     `;
-  }
-
-  _getClimateTargetTemp() {
-    if (!this.config.climate_entity || !this.hass) return '--';
-    const climate = this.hass.states[this.config.climate_entity];
-    if (!climate) return '--';
-
-    const temp = climate.attributes.temperature;
-    return temp !== undefined ? parseFloat(temp).toFixed(1) : '--';
   }
 
   getCardSize() {
@@ -1059,164 +884,26 @@ class HaThermostatCardEditor extends LitElement {
     }
 
     const sensorEntities = this._getEntities('sensor');
-    const climateEntities = this._getEntities('climate');
-    const binaryEntities = this._getEntities('binary_sensor');
-    const inputBooleanEntities = this._getEntities('input_boolean');
 
     return html`
       <div class="editor">
-        <h3>Required Entities</h3>
+        <h3>Template Sensor Entity</h3>
 
         <div class="form-group">
-          <label>Current Temperature Entity *</label>
+          <label>Entity *</label>
           <select
-            .configValue=${'current_temperature_entity'}
-            .value=${this.config.current_temperature_entity || ''}
+            .configValue=${'entity'}
+            .value=${this.config.entity || ''}
             @change=${this._valueChanged}
           >
-            <option value="">Select entity...</option>
+            <option value="">Select template sensor...</option>
             ${sensorEntities.map(entity => html`
-              <option value="${entity}" ?selected=${this.config.current_temperature_entity === entity}>
+              <option value="${entity}" ?selected=${this.config.entity === entity}>
                 ${entity}
               </option>
             `)}
           </select>
-        </div>
-
-        <h3>Optional Entities</h3>
-
-        <div class="form-group">
-          <label>Target Temperature Entity</label>
-          <select
-            .configValue=${'target_temperature_entity'}
-            .value=${this.config.target_temperature_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None</option>
-            ${sensorEntities.map(entity => html`
-              <option value="${entity}" ?selected=${this.config.target_temperature_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-          <small>Or use climate entity below for target temperature</small>
-        </div>
-
-        <div class="form-group">
-          <label>Humidity Entity</label>
-          <select
-            .configValue=${'humidity_entity'}
-            .value=${this.config.humidity_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None</option>
-            ${sensorEntities.map(entity => html`
-              <option value="${entity}" ?selected=${this.config.humidity_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Climate Entity</label>
-          <select
-            .configValue=${'climate_entity'}
-            .value=${this.config.climate_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None</option>
-            ${climateEntities.map(entity => html`
-              <option value="${entity}" ?selected=${this.config.climate_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-          <small>Used for mode display and target temperature</small>
-        </div>
-
-        <div class="form-group">
-          <label>Valve Entity</label>
-          <select
-            .configValue=${'valve_entity'}
-            .value=${this.config.valve_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None</option>
-            ${[...binaryEntities, ...sensorEntities].sort().map(entity => html`
-              <option value="${entity}" ?selected=${this.config.valve_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Heating Needed Entity</label>
-          <select
-            .configValue=${'heating_needed_entity'}
-            .value=${this.config.heating_needed_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None (auto-detect from climate)</option>
-            ${[...binaryEntities, ...inputBooleanEntities].sort().map(entity => html`
-              <option value="${entity}" ?selected=${this.config.heating_needed_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-          <small>Shows a fire badge when room needs heating</small>
-        </div>
-
-        <div class="form-group">
-          <label>Presence Entity</label>
-          <select
-            .configValue=${'presence_entity'}
-            .value=${this.config.presence_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None</option>
-            ${binaryEntities.map(entity => html`
-              <option value="${entity}" ?selected=${this.config.presence_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-          <small>Room icon color changes based on presence</small>
-        </div>
-
-        <div class="form-group">
-          <label>Mode Entity (input_select)</label>
-          <select
-            .configValue=${'mode_entity'}
-            .value=${this.config.mode_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None (use climate entity)</option>
-            ${this._getEntities('input_select').map(entity => html`
-              <option value="${entity}" ?selected=${this.config.mode_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-          <small>For custom modes: off, auto, manual</small>
-        </div>
-
-        <div class="form-group">
-          <label>Boost Entity</label>
-          <select
-            .configValue=${'boost_entity'}
-            .value=${this.config.boost_entity || ''}
-            @change=${this._valueChanged}
-          >
-            <option value="">None</option>
-            ${inputBooleanEntities.map(entity => html`
-              <option value="${entity}" ?selected=${this.config.boost_entity === entity}>
-                ${entity}
-              </option>
-            `)}
-          </select>
-          <small>Shows BOOST when on</small>
+          <small>Template sensor with attributes: target_temp, humidity, valve, mode, boost, heating_needed, presence</small>
         </div>
 
         <h3>Display Options</h3>
@@ -1231,6 +918,7 @@ class HaThermostatCardEditor extends LitElement {
               @input=${this._valueChanged}
               placeholder="mdi:sofa"
             />
+            <small>Override icon from entity attributes</small>
           </div>
 
           <div class="form-group">
@@ -1242,6 +930,7 @@ class HaThermostatCardEditor extends LitElement {
               @input=${this._valueChanged}
               placeholder="Living Room"
             />
+            <small>Override name from entity attributes</small>
           </div>
         </div>
 
@@ -1308,11 +997,12 @@ class HaThermostatCardEditor extends LitElement {
             <input
               type="number"
               .configValue=${'humidity_low'}
-              .value=${this.config.humidity_low || 30}
+              .value=${this.config.humidity_low || 40}
               @input=${this._valueChanged}
               min="0"
               max="100"
             />
+            <small>Orange below this value (default: 40)</small>
           </div>
 
           <div class="form-group">
@@ -1320,11 +1010,12 @@ class HaThermostatCardEditor extends LitElement {
             <input
               type="number"
               .configValue=${'humidity_high'}
-              .value=${this.config.humidity_high || 60}
+              .value=${this.config.humidity_high || 70}
               @input=${this._valueChanged}
               min="0"
               max="100"
             />
+            <small>Blue above this value (default: 70)</small>
           </div>
         </div>
       </div>
