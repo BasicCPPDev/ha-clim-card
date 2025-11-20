@@ -323,6 +323,15 @@ heating_needed: >
 
 ## Changelog
 
+### v3.0.0
+- Added automated release notes generation in GitHub Actions workflow
+- Enhanced release workflow with smart commit history based on version type (patch/minor/major)
+- Major README restructure with improved documentation and examples
+- Added screenshot to images directory
+
+### v2.1.3
+- Updated AUTO mode button background color to `#132F09` for consistent dark mode styling
+
 ### v2.1.2
 - Removed "C" from temperature display (shows "22.8°" instead of "22.8°C")
 - Fixed room icon to bright blue `#64b5f6` (no longer changes with presence)
