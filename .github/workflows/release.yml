@@ -38,6 +38,13 @@ jobs:
             echo "should_release=true" >> $GITHUB_OUTPUT
             echo "✅ Manual release triggered: ${{ inputs.version_type }}"
           else
+            # Check if commit is from repository owner
+            if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
+              echo "should_release=false" >> $GITHUB_OUTPUT
+              echo "⏭️  Commit not from owner (${{ github.actor }} != ${{ github.repository_owner }}), skipping auto-release"
+              exit 0
+            fi
+
             # Check commit message for release keywords
             COMMIT_MSG=$(git log -1 --pretty=%B)
             echo "Commit message: $COMMIT_MSG"
@@ -45,15 +52,15 @@ jobs:
             if echo "$COMMIT_MSG" | grep -qiE '\[release:major\]|\[major\]'; then
               echo "version_type=major" >> $GITHUB_OUTPUT
               echo "should_release=true" >> $GITHUB_OUTPUT
-              echo "✅ Auto release: MAJOR"
+              echo "✅ Auto release: MAJOR (by owner)"
             elif echo "$COMMIT_MSG" | grep -qiE '\[release:minor\]|\[minor\]'; then
               echo "version_type=minor" >> $GITHUB_OUTPUT
               echo "should_release=true" >> $GITHUB_OUTPUT
-              echo "✅ Auto release: MINOR"
+              echo "✅ Auto release: MINOR (by owner)"
             elif echo "$COMMIT_MSG" | grep -qiE '\[release:patch\]|\[patch\]'; then
               echo "version_type=patch" >> $GITHUB_OUTPUT
               echo "should_release=true" >> $GITHUB_OUTPUT
-              echo "✅ Auto release: PATCH"
+              echo "✅ Auto release: PATCH (by owner)"
             else
               echo "should_release=false" >> $GITHUB_OUTPUT
               echo "⏭️  No release keyword found, skipping"

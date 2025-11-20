@@ -125,6 +125,11 @@ console.info(
     return presence === 'on' ? this.config.icon_active_color : this.config.icon_inactive_color;
   }
 
+  _hasPresence() {
+    const presence = this._getEntityAttribute('presence');
+    return presence === 'on';
+  }
+
   _getValveIcon() {
     const state = this._getEntityAttribute('valve');
     if (state === null || state === undefined) return 'mdi:valve-closed';
@@ -488,11 +493,23 @@ console.info(
       display: flex;
       align-items: center;
       gap: 6px;
+      position: relative;
     }
 
     .room-icon {
       --mdc-icon-size: 28px;
       color: var(--primary-color, #ff9800);
+    }
+
+    .presence-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -4px;
+      --mdc-icon-size: 14px;
+      color: #4caf50;
+      background: var(--card-background-color, #1c1c1c);
+      border-radius: 50%;
+      padding: 1px;
     }
 
     .room-name {
@@ -578,7 +595,7 @@ console.info(
       gap: 6px;
       padding: 10px 16px;
       border-radius: 8px;
-      background: #4caf50;
+      background: #2e7d32; /* Darker green for dark mode */
       color: #fff;
       font-size: 1.05em;
       font-weight: 600;
@@ -641,6 +658,12 @@ console.info(
 
     ha-card.compact .room-icon {
       --mdc-icon-size: 22px;
+    }
+
+    ha-card.compact .presence-badge {
+      --mdc-icon-size: 12px;
+      bottom: -2px;
+      right: -2px;
     }
 
     ha-card.compact .room-info {
@@ -747,6 +770,7 @@ console.info(
     const valveColor = this._getValveColor();
     const modeButtonClass = this._getModeButtonClass();
     const modeIcon = this._getModeIcon();
+    const hasPresence = this._hasPresence();
 
     // Build CSS classes for ha-card
     const cardClasses = [
@@ -765,6 +789,12 @@ console.info(
                 icon="${roomIcon}"
                 style="color: ${roomIconColor}"
               ></ha-icon>
+              ${hasPresence ? html`
+                <ha-icon
+                  class="presence-badge"
+                  icon="mdi:motion-sensor"
+                ></ha-icon>
+              ` : ''}
               <span class="room-name">${roomName}</span>
             </div>
 
