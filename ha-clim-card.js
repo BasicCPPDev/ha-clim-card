@@ -679,19 +679,19 @@ console.info(
     }
 
     ha-card.compact .valve-icon {
-      --mdc-icon-size: 18px;
+      --mdc-icon-size: 17px; /* 5% smaller */
     }
 
     ha-card.compact .target-temp {
-      font-size: 1em;
+      font-size: 0.95em; /* 5% smaller */
     }
 
     ha-card.compact .humidity {
-      font-size: 1em;
+      font-size: 0.95em; /* 5% smaller */
     }
 
     ha-card.compact .humidity-icon {
-      --mdc-icon-size: 18px;
+      --mdc-icon-size: 17px; /* 5% smaller */
     }
 
     ha-card.compact .body-row {
@@ -699,17 +699,18 @@ console.info(
     }
 
     ha-card.compact .current-temp {
-      font-size: 32px;
+      font-size: 29px; /* 10% smaller (32px - 10%) */
     }
 
     ha-card.compact .mode-button {
-      padding: 8px 12px;
-      font-size: 0.95em; /* Keep mode text readable */
-      gap: 4px;
+      padding: 6px 10px; /* 20% smaller */
+      font-size: 0.76em; /* 20% smaller (0.95em * 0.8) */
+      gap: 3px;
+      background: #1b5e20; /* Darker green */
     }
 
     ha-card.compact .mode-button ha-icon {
-      --mdc-icon-size: 16px;
+      --mdc-icon-size: 13px; /* 20% smaller */
     }
   `;
 
