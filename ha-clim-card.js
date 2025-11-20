@@ -14,7 +14,7 @@
 import { LitElement, html, css } from 'https://unpkg.com/lit@3/index.js?module';
 
 console.info(
-  '%c  HA-CLIM-CARD  %c  v3.0.0 Loaded  ',
+  '%c  HA-CLIM-CARD  %c  v3.0.1 Loaded  ',
   'color: cyan; font-weight: bold; background: black',
   'color: white; font-weight: bold; background: dimgray'
 );
