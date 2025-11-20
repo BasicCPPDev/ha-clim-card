@@ -89,9 +89,6 @@ console.info(
       icon_active_color: config.icon_active_color || '#48c9b0',
       icon_inactive_color: config.icon_inactive_color || '#0e6251',
 
-      // Units
-      temperature_unit: config.temperature_unit || '°C',
-
       // Actions
       mode_tap_action: config.mode_tap_action || null,
       mode_hold_action: config.mode_hold_action || null,
@@ -116,14 +113,6 @@ console.info(
   // --------------------------------------------------------------------------
   // Icon and Color Helpers
   // --------------------------------------------------------------------------
-
-  _getRoomIconColor() {
-    const presence = this._getEntityAttribute('presence');
-    if (!presence) {
-      return this.config.icon_active_color;
-    }
-    return presence === 'on' ? this.config.icon_active_color : this.config.icon_inactive_color;
-  }
 
   _hasPresence() {
     const presence = this._getEntityAttribute('presence');
@@ -498,18 +487,18 @@ console.info(
 
     .room-icon {
       --mdc-icon-size: 28px;
-      color: var(--primary-color, #ff9800);
+      color: #64b5f6; /* Fixed bright blue */
     }
 
     .presence-badge {
       position: absolute;
-      bottom: -2px;
+      top: -4px;
       right: -4px;
-      --mdc-icon-size: 14px;
-      color: #4caf50;
+      --mdc-icon-size: 16px;
+      color: #ff5252; /* Bright red */
       background: var(--card-background-color, #1c1c1c);
       border-radius: 50%;
-      padding: 1px;
+      padding: 2px;
     }
 
     .room-name {
@@ -595,7 +584,7 @@ console.info(
       gap: 6px;
       padding: 10px 16px;
       border-radius: 8px;
-      background: #2e7d32; /* Darker green for dark mode */
+      background: #1b5e20; /* Very dark green for dark mode */
       color: #fff;
       font-size: 1.05em;
       font-weight: 600;
@@ -661,9 +650,9 @@ console.info(
     }
 
     ha-card.compact .presence-badge {
-      --mdc-icon-size: 12px;
-      bottom: -2px;
-      right: -2px;
+      --mdc-icon-size: 14px;
+      top: -3px;
+      right: -3px;
     }
 
     ha-card.compact .room-info {
@@ -706,7 +695,7 @@ console.info(
       padding: 6px 10px; /* 20% smaller */
       font-size: 0.76em; /* 20% smaller (0.95em * 0.8) */
       gap: 3px;
-      background: #1b5e20; /* Darker green */
+      background: #0d4016; /* Even darker green */
     }
 
     ha-card.compact .mode-button ha-icon {
@@ -764,7 +753,6 @@ console.info(
     const mode = this._getModeDisplay();
     const heatingNeeded = this._isHeatingNeeded();
     const humidityColor = this._getHumidityColor(humidity);
-    const roomIconColor = this._getRoomIconColor();
     const roomIcon = this._getRoomIconFromEntity();
     const roomName = this._getRoomNameFromEntity();
     const valveIcon = this._getValveIcon();
@@ -788,7 +776,6 @@ console.info(
               <ha-icon
                 class="room-icon"
                 icon="${roomIcon}"
-                style="color: ${roomIconColor}"
               ></ha-icon>
               ${hasPresence ? html`
                 <ha-icon
@@ -811,7 +798,7 @@ console.info(
                     style="color: ${valveColor}"
                   ></ha-icon>
                   <span class="target-temp">
-                    ${targetTemp}${this.config.temperature_unit}
+                    ${targetTemp}°
                   </span>
                 </div>
               ` : ''}
@@ -835,7 +822,7 @@ console.info(
               class="current-temp ${currentTemp === '--' ? 'unavailable' : ''}"
               @click=${this._handleTemperatureTap}
             >
-              ${currentTemp}${this.config.temperature_unit}
+              ${currentTemp}°
             </span>
 
             ${this.config.show_mode && mode ? html`
