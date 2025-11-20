@@ -85,7 +85,7 @@ console.info(
       // Colors
       humidity_low_color: config.humidity_low_color || '#ff9800',
       humidity_normal_color: config.humidity_normal_color || '#4caf50',
-      humidity_high_color: config.humidity_high_color || '#2196f3',
+      humidity_high_color: config.humidity_high_color || '#ef5350',
       icon_active_color: config.icon_active_color || '#48c9b0',
       icon_inactive_color: config.icon_inactive_color || '#0e6251',
 
@@ -481,7 +481,12 @@ console.info(
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .room-icon-container {
       position: relative;
+      display: flex;
+      align-items: center;
     }
 
     .room-icon {
@@ -494,7 +499,7 @@ console.info(
       top: -4px;
       right: -4px;
       --mdc-icon-size: 16px;
-      color: #ff5252;
+      color: #ff1744;
       background: var(--card-background-color, #1c1c1c);
       border-radius: 50%;
       padding: 2px;
@@ -766,16 +771,18 @@ console.info(
           <!-- Header row: Room info, Target temp with valve, Humidity -->
           <div class="header-row">
             <div class="room-info">
-              <ha-icon
-                class="room-icon"
-                icon="${roomIcon}"
-              ></ha-icon>
-              ${hasPresence ? html`
+              <div class="room-icon-container">
                 <ha-icon
-                  class="presence-badge"
-                  icon="mdi:motion-sensor"
+                  class="room-icon"
+                  icon="${roomIcon}"
                 ></ha-icon>
-              ` : ''}
+                ${hasPresence ? html`
+                  <ha-icon
+                    class="presence-badge"
+                    icon="mdi:motion-sensor"
+                  ></ha-icon>
+                ` : ''}
+              </div>
               <span class="room-name">${roomName}</span>
             </div>
 

@@ -161,40 +161,48 @@ jobs:
           CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
 
-          # Function to get commits since a specific tag
-          get_commits_since_tag() {
-            local since_tag=$1
-            local limit=$2
-            if [ -n "$limit" ]; then
-              git log ${since_tag}..HEAD --pretty=format:"- %s" --no-merges -n "$limit"
-            else
-              git log ${since_tag}..HEAD --pretty=format:"- %s" --no-merges
-            fi
-          }
+          # Extract version components (strip 'v' prefix first)
+          CURRENT_NO_V="${CURRENT_VERSION#v}"
+          NEW_NO_V="${NEW_VERSION#v}"
+
+          IFS='.' read -r CURRENT_MAJOR CURRENT_MINOR CURRENT_PATCH <<< "$CURRENT_NO_V"
+          IFS='.' read -r NEW_MAJOR NEW_MINOR NEW_PATCH <<< "$NEW_NO_V"
+
+          echo "Current version: $CURRENT_VERSION (major: $CURRENT_MAJOR, minor: $CURRENT_MINOR, patch: $CURRENT_PATCH)"
+          echo "New version: $NEW_VERSION (major: $NEW_MAJOR, minor: $NEW_MINOR, patch: $NEW_PATCH)"
 
           # Generate release notes based on version type
           case "$VERSION_TYPE" in
             patch)
-              # Only current commit (excluding version bump commit)
-              NOTES=$(git log -2 --pretty=format:"- %s" --no-merges | grep -v "^- chore: bump version" | head -1)
+              # Only current commit (excluding version bump commits)
+              echo "📝 Patch release: showing current commit only"
+              NOTES=$(git log -3 --pretty=format:"- %s" --no-merges | grep -v "chore: bump version" | head -1)
               ;;
             minor)
-              # Last 10 commits or until previous major (whichever is smaller)
-              PREVIOUS_MAJOR=$(git tag -l "v${NEW_VERSION%%.*}.*.*" | grep -v "$NEW_VERSION" | sort -V | tail -1)
-              if [ -n "$PREVIOUS_MAJOR" ]; then
-                NOTES=$(get_commits_since_tag "$PREVIOUS_MAJOR" 10)
-              else
-                NOTES=$(get_commits_since_tag "$CURRENT_VERSION" 10)
+              # Last 10 commits or all since previous major (whichever is smaller)
+              echo "📝 Minor release: showing up to 10 commits since last major v${NEW_MAJOR}.0.0"
+              # Find the most recent v{major}.0.0 tag or any tag from the same major version
+              PREVIOUS_MAJOR=$(git tag -l "v${NEW_MAJOR}.*.*" | grep -v "$NEW_VERSION" | sort -V | head -1)
+              if [ -z "$PREVIOUS_MAJOR" ]; then
+                # If no tags in current major, use current version
+                PREVIOUS_MAJOR="$CURRENT_VERSION"
               fi
+              echo "Using tag: $PREVIOUS_MAJOR"
+              NOTES=$(git log ${PREVIOUS_MAJOR}..HEAD --pretty=format:"- %s" --no-merges -n 10)
               ;;
             major)
               # All commits since previous major release
-              PREVIOUS_MAJOR=$(git tag -l "v$((${NEW_VERSION#v*.*.*} - 1)).*.*" | sort -V | tail -1)
-              if [ -n "$PREVIOUS_MAJOR" ]; then
-                NOTES=$(get_commits_since_tag "$PREVIOUS_MAJOR")
-              else
-                NOTES=$(get_commits_since_tag "$CURRENT_VERSION")
+              echo "📝 Major release: showing all commits since previous major"
+              # Find the latest tag from the previous major version
+              PREVIOUS_MAJOR_NUM=$((NEW_MAJOR - 1))
+              PREVIOUS_MAJOR=$(git tag -l "v${PREVIOUS_MAJOR_NUM}.*.*" | sort -V | tail -1)
+
+              if [ -z "$PREVIOUS_MAJOR" ]; then
+                # If no previous major, use current tag
+                PREVIOUS_MAJOR="$CURRENT_VERSION"
               fi
+              echo "Using tag: $PREVIOUS_MAJOR"
+              NOTES=$(git log ${PREVIOUS_MAJOR}..HEAD --pretty=format:"- %s" --no-merges)
               ;;
           esac
 

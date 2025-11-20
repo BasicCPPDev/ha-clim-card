@@ -160,7 +160,7 @@ layout: compact  # or 'normal' (default)
 ### Humidity
 - **Orange** (< 40%): Too dry
 - **Green** (40-70%): Comfortable
-- **Blue** (> 70%): Too humid
+- **Red** (> 70%): Too humid
 
 ### Valve Icon
 - **🔴 Closed** (0%): Red valve-closed icon
@@ -179,7 +179,7 @@ layout: compact  # or 'normal' (default)
 Orange border appears around card when `heating_needed` attribute is true/on.
 
 ### Presence Badge
-Red motion sensor icon (🔴) appears in top-right of room icon when `presence` attribute is `on`.
+Bright red motion sensor icon (🔴) appears in upper-right corner of room icon when `presence` attribute is `on`.
 
 ## Mode Button Actions
 
