@@ -153,6 +153,72 @@ jobs:
 
           echo "✅ Created and pushed tag ${NEW_VERSION}"
 
+      - name: Generate release notes
+        if: steps.check_release.outputs.should_release == 'true'
+        id: release_notes
+        run: |
+          VERSION_TYPE="${{ steps.check_release.outputs.version_type }}"
+          CURRENT_VERSION="${{ steps.get_version.outputs.current_version }}"
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+
+          # Function to get commits since a specific tag
+          get_commits_since_tag() {
+            local since_tag=$1
+            local limit=$2
+            if [ -n "$limit" ]; then
+              git log ${since_tag}..HEAD --pretty=format:"- %s" --no-merges -n "$limit"
+            else
+              git log ${since_tag}..HEAD --pretty=format:"- %s" --no-merges
+            fi
+          }
+
+          # Generate release notes based on version type
+          case "$VERSION_TYPE" in
+            patch)
+              # Only current commit (excluding version bump commit)
+              NOTES=$(git log -2 --pretty=format:"- %s" --no-merges | grep -v "^- chore: bump version" | head -1)
+              ;;
+            minor)
+              # Last 10 commits or until previous major (whichever is smaller)
+              PREVIOUS_MAJOR=$(git tag -l "v${NEW_VERSION%%.*}.*.*" | grep -v "$NEW_VERSION" | sort -V | tail -1)
+              if [ -n "$PREVIOUS_MAJOR" ]; then
+                NOTES=$(get_commits_since_tag "$PREVIOUS_MAJOR" 10)
+              else
+                NOTES=$(get_commits_since_tag "$CURRENT_VERSION" 10)
+              fi
+              ;;
+            major)
+              # All commits since previous major release
+              PREVIOUS_MAJOR=$(git tag -l "v$((${NEW_VERSION#v*.*.*} - 1)).*.*" | sort -V | tail -1)
+              if [ -n "$PREVIOUS_MAJOR" ]; then
+                NOTES=$(get_commits_since_tag "$PREVIOUS_MAJOR")
+              else
+                NOTES=$(get_commits_since_tag "$CURRENT_VERSION")
+              fi
+              ;;
+          esac
+
+          # Filter out version bump commits
+          NOTES=$(echo "$NOTES" | grep -v "chore: bump version" || echo "- Minor updates and improvements")
+
+          # Save to file for multiline output
+          cat > release_notes.txt << 'EOF'
+          ## What's Changed
+
+          $NOTES
+
+          ## Installation
+
+          Install via HACS or download `ha-clim-card.js` and add to your Home Assistant configuration.
+
+          See [README](https://github.com/${{ github.repository }}/blob/main/README.md) for full documentation.
+          EOF
+
+          # Replace $NOTES variable
+          sed -i "s|\$NOTES|$NOTES|g" release_notes.txt
+
+          echo "notes_file=release_notes.txt" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         if: steps.check_release.outputs.should_release == 'true'
         uses: actions/create-release@v1
@@ -161,14 +227,6 @@ jobs:
         with:
           tag_name: ${{ steps.bump_version.outputs.new_version }}
           release_name: Release ${{ steps.bump_version.outputs.new_version }}
-          body: |
-            ## Release ${{ steps.bump_version.outputs.new_version }}
-
-            **Version Type:** ${{ steps.check_release.outputs.version_type }}
-
-            ### Installation
-            Install via HACS or download `ha-clim-card.js` and add to your Home Assistant configuration.
-
-            See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for usage instructions.
+          body_path: ${{ steps.release_notes.outputs.notes_file }}
           draft: false
           prerelease: false

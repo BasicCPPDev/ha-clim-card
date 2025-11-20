@@ -469,7 +469,6 @@ console.info(
       flex-direction: column;
     }
 
-    /* Header row */
     .header-row {
       display: flex;
       align-items: center;
@@ -487,7 +486,7 @@ console.info(
 
     .room-icon {
       --mdc-icon-size: 28px;
-      color: #64b5f6; /* Fixed bright blue */
+      color: #64b5f6;
     }
 
     .presence-badge {
@@ -495,7 +494,7 @@ console.info(
       top: -4px;
       right: -4px;
       --mdc-icon-size: 16px;
-      color: #ff5252; /* Bright red */
+      color: #ff5252;
       background: var(--card-background-color, #1c1c1c);
       border-radius: 50%;
       padding: 2px;
@@ -556,7 +555,6 @@ console.info(
       font-weight: 500;
     }
 
-    /* Body row */
     .body-row {
       display: flex;
       align-items: center;
@@ -577,14 +575,13 @@ console.info(
       opacity: 0.8;
     }
 
-    /* Mode button */
     .mode-button {
       display: flex;
       align-items: center;
       gap: 6px;
       padding: 10px 16px;
       border-radius: 8px;
-      background: #132F09; /* Very dark green for dark mode */
+      background: #132F09;
       color: #fff;
       font-size: 1.05em;
       font-weight: 600;
@@ -628,21 +625,18 @@ console.info(
       --mdc-icon-size: 16px;
     }
 
-    /* Unavailable state */
     .unavailable {
       color: var(--disabled-text-color, #666);
     }
 
-    /* ====================================================================== */
-    /* COMPACT LAYOUT - Fits in half width, no room name, smaller text */
-    /* ====================================================================== */
+    /* COMPACT LAYOUT */
 
     ha-card.compact {
       padding: 3px 6px;
     }
 
     ha-card.compact .room-name {
-      display: none; /* Hide room name in compact mode */
+      display: none;
     }
 
     ha-card.compact .room-icon {
@@ -656,7 +650,7 @@ console.info(
     }
 
     ha-card.compact .room-info {
-      gap: 0; /* No gap since no name */
+      gap: 0;
     }
 
     ha-card.compact .header-row {
@@ -668,19 +662,19 @@ console.info(
     }
 
     ha-card.compact .valve-icon {
-      --mdc-icon-size: 17px; /* 5% smaller */
+      --mdc-icon-size: 17px;
     }
 
     ha-card.compact .target-temp {
-      font-size: 0.95em; /* 5% smaller */
+      font-size: 0.95em;
     }
 
     ha-card.compact .humidity {
-      font-size: 0.95em; /* 5% smaller */
+      font-size: 0.95em;
     }
 
     ha-card.compact .humidity-icon {
-      --mdc-icon-size: 17px; /* 5% smaller */
+      --mdc-icon-size: 17px;
     }
 
     ha-card.compact .body-row {
@@ -688,18 +682,17 @@ console.info(
     }
 
     ha-card.compact .current-temp {
-      font-size: 29px; /* 10% smaller (32px - 10%) */
+      font-size: 29px;
     }
 
     ha-card.compact .mode-button {
-      padding: 6px 10px; /* 20% smaller */
-      font-size: 0.76em; /* 20% smaller (0.95em * 0.8) */
+      padding: 6px 10px;
+      font-size: 0.76em;
       gap: 3px;
-      background: #132F09; /* Even darker green */
     }
 
     ha-card.compact .mode-button ha-icon {
-      --mdc-icon-size: 13px; /* 20% smaller */
+      --mdc-icon-size: 13px;
     }
   `;
 

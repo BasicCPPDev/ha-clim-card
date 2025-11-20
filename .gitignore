@@ -1,6 +1,5 @@
 # Test files
 test.html
-*.png
 
 # OS files
 .DS_Store

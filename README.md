@@ -10,13 +10,15 @@ A simple, elegant thermostat card for Home Assistant that displays temperature, 
 
 ## Features
 
-- **Current Temperature** - Large, prominent display with room icon
-- **Target Temperature** - Shows setpoint from climate entity or dedicated sensor
+- **Current Temperature** - Large, prominent display (45px normal, 29px compact)
+- **Target Temperature** - Shows setpoint with valve status indicator
 - **Humidity** - Color-coded display based on configurable thresholds
-- **Valve Status** - Visual indicator for valve open/closed state
-- **HVAC Mode** - Shows current heating/cooling mode with tap to control
-- **Heating Badge** - Optional pulsing badge when room needs heating
-- **Tap Actions** - Tap any element to open more-info dialog with history
+- **Valve Status** - Visual indicator for valve position (0-100%)
+- **HVAC Mode** - Shows current mode (AUTO/MANUAL/BOOST/OFF) with tap actions
+- **Heating Indicator** - Orange border when heating is needed
+- **Presence Detection** - Red badge indicator when presence detected
+- **Compact Layout** - Half-width mode perfect for grid layouts
+- **Tap Actions** - Customizable tap/hold/double-tap on mode button
 
 ## Installation
 
@@ -27,7 +29,7 @@ A simple, elegant thermostat card for Home Assistant that displays temperature, 
 3. Click the three dots menu and select "Custom repositories"
 4. Add this repository URL with category "Lovelace"
 5. Install "Thermostat Card"
-6. Add the resource to your Lovelace configuration
+6. Refresh your browser
 
 ### Manual Installation
 
@@ -41,229 +43,303 @@ resources:
     type: module
 ```
 
-## Configuration
+## Quick Start
 
-### Single Entity Mode (Recommended)
+### 1. Create Template Sensor
 
-Aggregate all thermostat data into one template sensor:
+Add to your `configuration.yaml` (or separate template file):
 
 ```yaml
-# configuration.yaml
 template:
   - sensor:
-      - name: "Salon Thermostat"
-        state: "{{ states('sensor.salon_temperature') }}"
+      - name: "Living Room Thermostat"
+        state: "{{ states('sensor.living_room_temperature') }}"
         unit_of_measurement: "°C"
         icon: "mdi:sofa"
         attributes:
-          room_name: "Salon"
-          target_temp: "{{ states('sensor.salon_target') }}"
-          humidity: "{{ states('sensor.salon_humidity') }}"
-          valve: "{{ states('sensor.salon_valve') }}"
-          mode: "{{ states('input_select.heater_mode_salon') }}"
-          boost: "{{ states('input_boolean.heater_boost_salon') }}"
-          heating_needed: "{{ states('sensor.heat_computed_states')[2] == '+' }}"
+          room_name: "Living Room"
+          target_temp: "{{ states('sensor.living_room_target') }}"
+          humidity: "{{ states('sensor.living_room_humidity') }}"
+          valve: "{{ states('sensor.living_room_valve') }}"
+          mode: "{{ states('input_select.heater_mode_living') }}"
+          boost: "{{ states('input_boolean.heater_boost_living') }}"
+          heating_needed: "{{ is_state('binary_sensor.living_room_heating', 'on') }}"
+          presence: "{{ states('binary_sensor.living_room_presence') }}"
 ```
 
+### 2. Add Card to Lovelace
+
+**Normal Layout:**
 ```yaml
-# Lovelace card config
 type: custom:ha-clim-card
-entity: sensor.salon_thermostat
+entity: sensor.living_room_thermostat
 ```
 
-### Minimal Configuration (Legacy)
-
+**Compact Layout (half width):**
 ```yaml
 type: custom:ha-clim-card
-current_temperature_entity: sensor.living_room_temperature
+entity: sensor.living_room_thermostat
+layout: compact
 ```
 
-### Full Configuration (Legacy)
-
+**Side-by-Side Compact:**
 ```yaml
-type: custom:ha-clim-card
-
-# Required
-current_temperature_entity: sensor.living_room_temperature
-
-# Optional entities
-target_temperature_entity: sensor.living_room_target  # Or use climate entity
-humidity_entity: sensor.living_room_humidity
-climate_entity: climate.living_room
-valve_entity: binary_sensor.living_room_valve
-heating_needed_entity: binary_sensor.living_room_heating_needed
-
-# Display options
-room_icon: mdi:sofa
-room_name: Living Room
-show_humidity: true
-show_target: true
-show_valve: true
-show_mode: true
-show_heating_badge: true
-
-# Humidity color thresholds
-humidity_low: 30
-humidity_high: 60
-humidity_low_color: '#ff9800'
-humidity_normal_color: '#4caf50'
-humidity_high_color: '#2196f3'
-
-# Units
-temperature_unit: '°C'
+type: grid
+columns: 2
+cards:
+  - type: custom:ha-clim-card
+    entity: sensor.living_room_thermostat
+    layout: compact
+  - type: custom:ha-clim-card
+    entity: sensor.bedroom_thermostat
+    layout: compact
 ```
 
 ## Configuration Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `entity` | string | - | Single entity with all data as attributes (recommended) |
-| `current_temperature_entity` | string | **Required*** | Entity for current temperature (*or use `entity`) |
-| `target_temperature_entity` | string | - | Entity for target temperature |
-| `humidity_entity` | string | - | Entity for humidity |
-| `climate_entity` | string | - | Climate entity for mode and target |
-| `valve_entity` | string | - | Entity for valve status (supports position 0-100) |
-| `heating_needed_entity` | string | - | Entity to show heating badge (simple on/off check) |
-| `heating_needed` | string | - | JavaScript expression for heating badge (has access to `states` object) |
-| `presence_entity` | string | - | Binary sensor for room presence (changes icon color) |
-| `mode_entity` | string | - | input_select for custom modes (off/auto/manual) |
-| `boost_entity` | string | - | input_boolean for boost mode |
-| `room_icon` | string | `mdi:sofa` | Icon to display for the room |
-| `room_name` | string | - | Room name (not currently displayed) |
+| `entity` | string | **Required** | Template sensor with all data as attributes |
+| `layout` | string | `normal` | Layout mode: `normal` or `compact` (half width) |
+| `room_icon` | string | `mdi:sofa` | Override icon from entity attributes |
+| `room_name` | string | - | Override name from entity attributes (hidden in compact) |
 | `show_humidity` | boolean | `true` | Show humidity display |
-| `show_target` | boolean | `true` | Show target temperature |
-| `show_valve` | boolean | `true` | Show valve status |
-| `show_mode` | boolean | `true` | Show HVAC mode |
-| `show_heating_badge` | boolean | `true` | Show heating needed badge |
-| `humidity_low` | number | `30` | Below this = low humidity color |
-| `humidity_high` | number | `60` | Above this = high humidity color |
-| `humidity_low_color` | string | `#ff9800` | Color for low humidity (orange) |
-| `humidity_normal_color` | string | `#4caf50` | Color for normal humidity (green) |
-| `humidity_high_color` | string | `#2196f3` | Color for high humidity (blue) |
-| `icon_active_color` | string | `#48c9b0` | Room icon color when presence detected |
-| `icon_inactive_color` | string | `#0e6251` | Room icon color when no presence |
-| `temperature_unit` | string | `°C` | Temperature unit to display |
-| `mode_tap_action` | object | - | Custom action when tapping mode button |
-| `mode_hold_action` | object | - | Custom action when holding mode button (500ms) |
-| `mode_double_tap_action` | object | - | Custom action when double-tapping mode button |
+| `show_target` | boolean | `true` | Show target temperature with valve |
+| `show_mode` | boolean | `true` | Show HVAC mode button |
+| `show_heating_badge` | boolean | `true` | Show heating indicator (orange border) |
+| `humidity_low` | number | `40` | Below this = orange color (too dry) |
+| `humidity_high` | number | `70` | Above this = blue color (too humid) |
+| `mode_tap_action` | object | - | Action when tapping mode button |
+| `mode_hold_action` | object | - | Action when holding mode button (500ms) |
+| `mode_double_tap_action` | object | - | Action when double-tapping mode button |
 
-## Interactions
+### Template Sensor Attributes
 
-- **Tap current temperature** - Opens more-info dialog for temperature sensor
-- **Tap target temperature** - Opens more-info for target sensor or climate entity
-- **Tap humidity** - Opens more-info dialog for humidity sensor
-- **Tap mode button** - Executes `mode_tap_action` or opens more-info
-- **Hold mode button** - Executes `mode_hold_action` (500ms hold)
-- **Double-tap mode button** - Executes `mode_double_tap_action`
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `state` | ✓ | Current temperature (main sensor state) |
+| `icon` | | Room icon (default: `mdi:sofa`) |
+| `room_name` | | Room display name (shown in normal layout) |
+| `target_temp` | | Target temperature setpoint |
+| `humidity` | | Current humidity percentage |
+| `valve` | | Valve position 0-100 (affects icon: closed/partial/open) |
+| `mode` | | Heating mode: `off`, `auto`, `manual` |
+| `boost` | | Boost state: `on` or `off` |
+| `heating_needed` | | Boolean/string for orange border indicator |
+| `presence` | | Presence state: `on` shows red badge on icon |
 
-## Action Types
+## Layout Modes
 
-Supported action types for mode button:
+### Normal Layout (Default)
+- Full width display
+- Shows room icon + name
+- Large temperature (45px)
+- Full-size mode button
 
-| Action | Description |
-|--------|-------------|
-| `fire-dom-event` | Fire DOM event (for browser_mod popups) |
-| `more-info` | Show entity more-info dialog |
-| `call-service` | Call a Home Assistant service |
-| `navigate` | Navigate to a path |
-| `toggle` | Toggle an entity |
-| `url` | Open external URL |
-| `none` | Do nothing |
+### Compact Layout
+- Half width (perfect for 2-column grids)
+- Shows room icon only (no name)
+- Smaller temperature (29px)
+- Smaller mode button (20% reduced)
+- All header elements 5% smaller
 
-### Example with browser_mod popup
+**Usage:**
+```yaml
+type: custom:ha-clim-card
+entity: sensor.room_thermostat
+layout: compact  # or 'normal' (default)
+```
 
+## Visual Indicators
+
+### Temperature
+- **Display**: Shows as `22.8°` (no "C")
+- **Color**: White text
+- **Size**: 45px (normal), 29px (compact)
+
+### Humidity
+- **Orange** (< 40%): Too dry
+- **Green** (40-70%): Comfortable
+- **Blue** (> 70%): Too humid
+
+### Valve Icon
+- **🔴 Closed** (0%): Red valve-closed icon
+- **🟠 Partial** (1-99%): Orange valve icon
+- **🟢 Open** (100%): Green valve-open icon
+
+### Mode Button Colors
+- **AUTO**: Dark green `#132F09` (normal), `#132F09` (compact)
+- **MANUAL**: Yellow `#ffc107` with black text
+- **BOOST**: Orange `#ff9800`
+- **OFF**: Grey `#666`
+- **HEAT**: Red `#f44336`
+- **COOL**: Blue `#2196f3`
+
+### Heating Indicator
+Orange border appears around card when `heating_needed` attribute is true/on.
+
+### Presence Badge
+Red motion sensor icon (🔴) appears in top-right of room icon when `presence` attribute is `on`.
+
+## Mode Button Actions
+
+### Tap Actions
+```yaml
+mode_tap_action:
+  action: navigate
+  navigation_path: "#popup-thermostat"
+```
+
+### Supported Action Types
+
+| Action | Description | Example |
+|--------|-------------|---------|
+| `navigate` | Navigate to dashboard path | `navigation_path: "/lovelace/climate"` |
+| `more-info` | Show entity more-info | `entity: input_select.heater_mode` |
+| `call-service` | Call HA service | `service: climate.set_temperature` |
+| `toggle` | Toggle entity | `entity: input_boolean.boost` |
+| `url` | Open external URL | `url_path: "https://example.com"` |
+| `fire-dom-event` | Fire custom event | For browser_mod popups |
+| `none` | Do nothing | - |
+
+### Example: Browser Mod Popup
 ```yaml
 mode_tap_action:
   action: fire-dom-event
   browser_mod:
     service: browser_mod.popup
     data:
-      title: "Thermostat Control"
+      title: "Climate Control"
       content:
         type: entities
         entities:
           - input_select.heater_mode
           - input_boolean.heater_boost
+          - input_number.target_temp
 ```
 
-## Humidity Colors
+### Example: Service Call
+```yaml
+mode_hold_action:
+  action: call-service
+  service: input_boolean.toggle
+  service_data:
+    entity_id: input_boolean.heater_boost
+```
 
-The humidity value changes color based on thresholds:
+## Complete Examples
 
-- **Below `humidity_low`** - Orange (too dry)
-- **Between thresholds** - Green (comfortable)
-- **Above `humidity_high`** - Blue (too humid)
-
-## Heating Badge
-
-The card shows an orange border when the room needs heating. This is triggered by:
-
-1. **JavaScript expression** (`heating_needed`) - Custom logic with access to `states` object:
-   ```yaml
-   heating_needed: "states['sensor.heat_computed_states'].state[2] === '+'"
-   ```
-
-2. **Simple entity check** (`heating_needed_entity`) - Checks if entity is `on` / `true` / `1`:
-   ```yaml
-   heating_needed_entity: binary_sensor.living_room_heating_needed
-   ```
-
-3. **Climate entity fallback** - Checks if `hvac_action` is `heating`
-
-## Examples
-
-### Living Room (Full Featured)
-
-This example replaces a complex stack of button-cards with a single thermostat card:
+### Full-Featured Room
+```yaml
+template:
+  - sensor:
+      - name: "Salon Thermostat"
+        state: "{{ states('sensor.th_sal_temperature') }}"
+        unit_of_measurement: "°C"
+        icon: "mdi:sofa"
+        attributes:
+          room_name: "Salon"
+          target_temp: "{{ states('sensor.nr_target_temp_salon') }}"
+          humidity: "{{ states('sensor.th_sal_humidity') }}"
+          valve: "{{ states('sensor.valve_sal_position') }}"
+          mode: "{{ states('input_select.heater_mode_sal') }}"
+          boost: "{{ states('input_boolean.heater_boost_sal') }}"
+          heating_needed: "{{ states('sensor.heat_computed_states')[2] == '+' }}"
+          presence: "{{ states('binary_sensor.radardetector1_presence') }}"
+```
 
 ```yaml
 type: custom:ha-clim-card
-current_temperature_entity: sensor.th_sal_temperature
-target_temperature_entity: sensor.nr_target_temp_salon
-humidity_entity: sensor.th_sal_humidity
-valve_entity: sensor.valve_sal_position
-mode_entity: input_select.heater_mode_sal
-boost_entity: input_boolean.heater_boost_sal
-heating_needed_entity: sensor.heat_computed_states
-presence_entity: binary_sensor.radardetector1_presence
-room_icon: mdi:sofa
+entity: sensor.salon_thermostat
 humidity_high: 70
 mode_tap_action:
   action: navigate
   navigation_path: "#popup-tempsal"
 ```
 
-### Basic Thermostat
-
+### Compact Grid Layout
 ```yaml
-type: custom:ha-clim-card
-current_temperature_entity: sensor.bedroom_temperature
-climate_entity: climate.bedroom
-room_icon: mdi:bed
+type: grid
+columns: 2
+square: false
+cards:
+  - type: custom:ha-clim-card
+    entity: sensor.cuisine_thermostat
+    layout: compact
+  - type: custom:ha-clim-card
+    entity: sensor.sam_thermostat
+    layout: compact
+  - type: custom:ha-clim-card
+    entity: sensor.sdb_thermostat
+    layout: compact
+  - type: custom:ha-clim-card
+    entity: sensor.parents_thermostat
+    layout: compact
 ```
 
-### With Climate Entity
-
+### Simple Temperature Display
 ```yaml
 type: custom:ha-clim-card
-current_temperature_entity: sensor.bathroom_temperature
-humidity_entity: sensor.bathroom_humidity
-climate_entity: climate.bathroom
-room_icon: mdi:shower
-humidity_high: 70  # Higher threshold for bathroom
-```
-
-### Temperature Only
-
-```yaml
-type: custom:ha-clim-card
-current_temperature_entity: sensor.garage_temperature
-room_icon: mdi:garage
+entity: sensor.garage_thermostat
 show_humidity: false
 show_target: false
 show_mode: false
 show_heating_badge: false
 ```
+
+## Tips
+
+### Room Icons
+- 🛋️ `mdi:sofa` - Living room
+- 🍴 `mdi:silverware-fork-knife` - Dining room
+- 🍳 `mdi:fridge-industrial` - Kitchen
+- 🛏️ `mdi:bed` - Bedroom
+- 🚿 `mdi:shower-head` - Bathroom
+- 👔 `mdi:hanger` - Dressing room
+- 🏠 `mdi:home` - Generic room
+
+### Humidity Thresholds
+- **Living spaces**: 40-70% (default)
+- **Bathroom**: 40-80% (higher tolerance)
+- **Bedroom**: 40-60% (narrower range for comfort)
+
+### Heating Logic Examples
+```yaml
+# Simple binary sensor check
+heating_needed: "{{ is_state('binary_sensor.room_heating', 'on') }}"
+
+# Check specific character in computed string
+heating_needed: "{{ states('sensor.heat_computed_states')[2] == '+' }}"
+
+# Temperature difference check
+heating_needed: "{{ (states('sensor.target_temp') | float) > (states('sensor.current_temp') | float) + 0.5 }}"
+
+# Complex logic with multiple conditions
+heating_needed: >
+  {{ (states('sensor.target_temp') | float) > (states('sensor.current_temp') | float)
+     and is_state('input_select.heater_mode', 'auto')
+     and is_state('binary_sensor.presence', 'on') }}
+```
+
+## Changelog
+
+### v2.1.2
+- Removed "C" from temperature display (shows "22.8°" instead of "22.8°C")
+- Fixed room icon to bright blue `#64b5f6` (no longer changes with presence)
+- Added presence badge (red motion sensor icon, top-right of room icon)
+- Darkened AUTO mode button colors for better dark mode visibility
+- Cleaned up redundant CSS comments
+
+### v2.1.0
+- Added compact layout mode (half width)
+- Adjusted compact sizing: 29px temp, smaller buttons, 5% header reduction
+
+### v2.0.0
+- Removed legacy mode (individual entities)
+- Now requires single template sensor entity
+- Updated humidity defaults: 40/70 (was 30/60)
+- Added validation: humidity_high must be > humidity_low
+- Simplified configurator
 
 ## License
 
