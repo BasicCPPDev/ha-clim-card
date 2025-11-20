@@ -66,6 +66,9 @@ console.info(
       // Single entity mode (required)
       entity: config.entity,
 
+      // Layout
+      layout: config.layout || 'normal', // 'normal' or 'compact'
+
       // Display options
       room_icon: config.room_icon || 'mdi:sofa',
       room_name: config.room_name || '',
@@ -623,6 +626,68 @@ console.info(
     .unavailable {
       color: var(--disabled-text-color, #666);
     }
+
+    /* ====================================================================== */
+    /* COMPACT LAYOUT - Fits in half width, no room name, smaller text */
+    /* ====================================================================== */
+
+    ha-card.compact {
+      padding: 3px 6px;
+    }
+
+    ha-card.compact .room-name {
+      display: none; /* Hide room name in compact mode */
+    }
+
+    ha-card.compact .room-icon {
+      --mdc-icon-size: 22px;
+    }
+
+    ha-card.compact .room-info {
+      gap: 0; /* No gap since no name */
+    }
+
+    ha-card.compact .header-row {
+      padding-bottom: 4px;
+    }
+
+    ha-card.compact .header-center {
+      gap: 8px;
+    }
+
+    ha-card.compact .valve-icon {
+      --mdc-icon-size: 18px;
+    }
+
+    ha-card.compact .target-temp {
+      font-size: 1em;
+    }
+
+    ha-card.compact .humidity {
+      font-size: 1em;
+    }
+
+    ha-card.compact .humidity-icon {
+      --mdc-icon-size: 18px;
+    }
+
+    ha-card.compact .body-row {
+      padding-top: 6px;
+    }
+
+    ha-card.compact .current-temp {
+      font-size: 32px;
+    }
+
+    ha-card.compact .mode-button {
+      padding: 8px 12px;
+      font-size: 0.95em; /* Keep mode text readable */
+      gap: 4px;
+    }
+
+    ha-card.compact .mode-button ha-icon {
+      --mdc-icon-size: 16px;
+    }
   `;
 
   // --------------------------------------------------------------------------
@@ -683,8 +748,14 @@ console.info(
     const modeButtonClass = this._getModeButtonClass();
     const modeIcon = this._getModeIcon();
 
+    // Build CSS classes for ha-card
+    const cardClasses = [
+      heatingNeeded ? 'heating-needed' : '',
+      this.config.layout === 'compact' ? 'compact' : ''
+    ].filter(c => c).join(' ');
+
     return html`
-      <ha-card class="${heatingNeeded ? 'heating-needed' : ''}">
+      <ha-card class="${cardClasses}">
         <div class="clim-content">
           <!-- Header row: Room info, Target temp with valve, Humidity -->
           <div class="header-row">
@@ -908,6 +979,19 @@ class HaThermostatCardEditor extends LitElement {
 
         <h3>Display Options</h3>
 
+        <div class="form-group">
+          <label>Layout</label>
+          <select
+            .configValue=${'layout'}
+            .value=${this.config.layout || 'normal'}
+            @change=${this._valueChanged}
+          >
+            <option value="normal" ?selected=${this.config.layout === 'normal' || !this.config.layout}>Normal</option>
+            <option value="compact" ?selected=${this.config.layout === 'compact'}>Compact (half width, no room name)</option>
+          </select>
+          <small>Compact mode: fits in half width, icon only, smaller text</small>
+        </div>
+
         <div class="row">
           <div class="form-group">
             <label>Room Icon</label>
@@ -930,7 +1014,7 @@ class HaThermostatCardEditor extends LitElement {
               @input=${this._valueChanged}
               placeholder="Living Room"
             />
-            <small>Override name from entity attributes</small>
+            <small>Not shown in compact mode</small>
           </div>
         </div>
 
