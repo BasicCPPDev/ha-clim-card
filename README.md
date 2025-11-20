@@ -43,14 +43,42 @@ resources:
 
 ## Configuration
 
-### Minimal Configuration
+### Single Entity Mode (Recommended)
+
+Aggregate all thermostat data into one template sensor:
+
+```yaml
+# configuration.yaml
+template:
+  - sensor:
+      - name: "Salon Thermostat"
+        state: "{{ states('sensor.salon_temperature') }}"
+        unit_of_measurement: "°C"
+        icon: "mdi:sofa"
+        attributes:
+          room_name: "Salon"
+          target_temp: "{{ states('sensor.salon_target') }}"
+          humidity: "{{ states('sensor.salon_humidity') }}"
+          valve: "{{ states('sensor.salon_valve') }}"
+          mode: "{{ states('input_select.heater_mode_salon') }}"
+          boost: "{{ states('input_boolean.heater_boost_salon') }}"
+          heating_needed: "{{ states('sensor.heat_computed_states')[2] == '+' }}"
+```
+
+```yaml
+# Lovelace card config
+type: custom:ha-clim-card
+entity: sensor.salon_thermostat
+```
+
+### Minimal Configuration (Legacy)
 
 ```yaml
 type: custom:ha-clim-card
 current_temperature_entity: sensor.living_room_temperature
 ```
 
-### Full Configuration
+### Full Configuration (Legacy)
 
 ```yaml
 type: custom:ha-clim-card
@@ -89,12 +117,14 @@ temperature_unit: '°C'
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `current_temperature_entity` | string | **Required** | Entity for current temperature |
+| `entity` | string | - | Single entity with all data as attributes (recommended) |
+| `current_temperature_entity` | string | **Required*** | Entity for current temperature (*or use `entity`) |
 | `target_temperature_entity` | string | - | Entity for target temperature |
 | `humidity_entity` | string | - | Entity for humidity |
 | `climate_entity` | string | - | Climate entity for mode and target |
 | `valve_entity` | string | - | Entity for valve status (supports position 0-100) |
-| `heating_needed_entity` | string | - | Entity to show heating badge |
+| `heating_needed_entity` | string | - | Entity to show heating badge (simple on/off check) |
+| `heating_needed` | string | - | JavaScript expression for heating badge (has access to `states` object) |
 | `presence_entity` | string | - | Binary sensor for room presence (changes icon color) |
 | `mode_entity` | string | - | input_select for custom modes (off/auto/manual) |
 | `boost_entity` | string | - | input_boolean for boost mode |
@@ -166,10 +196,19 @@ The humidity value changes color based on thresholds:
 
 ## Heating Badge
 
-When the room needs heating, a pulsing "HEATING" badge appears in the top-right corner. This is triggered when:
+The card shows an orange border when the room needs heating. This is triggered by:
 
-1. `heating_needed_entity` is `on` / `true` / `1`
-2. Or climate entity's `hvac_action` is `heating`
+1. **JavaScript expression** (`heating_needed`) - Custom logic with access to `states` object:
+   ```yaml
+   heating_needed: "states['sensor.heat_computed_states'].state[2] === '+'"
+   ```
+
+2. **Simple entity check** (`heating_needed_entity`) - Checks if entity is `on` / `true` / `1`:
+   ```yaml
+   heating_needed_entity: binary_sensor.living_room_heating_needed
+   ```
+
+3. **Climate entity fallback** - Checks if `hvac_action` is `heating`
 
 ## Examples
 

@@ -48,12 +48,15 @@ console.info(
       throw new Error('Invalid configuration');
     }
 
-    // Validate required entities
-    if (!config.current_temperature_entity) {
-      throw new Error('You need to define current_temperature_entity');
+    // Validate required entities - either single entity or individual entities
+    if (!config.entity && !config.current_temperature_entity) {
+      throw new Error('You need to define either "entity" or "current_temperature_entity"');
     }
 
     this.config = {
+      // Single entity mode (optional)
+      entity: config.entity || null,
+
       // Entity configurations
       current_temperature_entity: config.current_temperature_entity,
       target_temperature_entity: config.target_temperature_entity || null,
@@ -61,6 +64,7 @@ console.info(
       valve_entity: config.valve_entity || null,
       climate_entity: config.climate_entity || null,
       heating_needed_entity: config.heating_needed_entity || null,
+      heating_needed: config.heating_needed || null,
       presence_entity: config.presence_entity || null,
       mode_entity: config.mode_entity || null,
       boost_entity: config.boost_entity || null,
@@ -125,8 +129,16 @@ console.info(
   }
 
   _getValveIcon() {
-    if (!this.config.valve_entity) return 'mdi:valve-closed';
-    const state = this._getState(this.config.valve_entity);
+    let state;
+
+    // Entity mode: read from attributes
+    if (this.config.entity) {
+      state = this._getEntityAttribute('valve');
+      if (state === null || state === undefined) return 'mdi:valve-closed';
+    } else {
+      if (!this.config.valve_entity) return 'mdi:valve-closed';
+      state = this._getState(this.config.valve_entity);
+    }
 
     // Handle numeric valve position
     const pos = parseFloat(state);
@@ -142,8 +154,16 @@ console.info(
   }
 
   _getValveColor() {
-    if (!this.config.valve_entity) return 'var(--disabled-text-color, #666)';
-    const state = this._getState(this.config.valve_entity);
+    let state;
+
+    // Entity mode: read from attributes
+    if (this.config.entity) {
+      state = this._getEntityAttribute('valve');
+      if (state === null || state === undefined) return 'var(--disabled-text-color, #666)';
+    } else {
+      if (!this.config.valve_entity) return 'var(--disabled-text-color, #666)';
+      state = this._getState(this.config.valve_entity);
+    }
 
     const pos = parseFloat(state);
     if (!isNaN(pos)) {
@@ -158,6 +178,24 @@ console.info(
   }
 
   _getModeDisplay() {
+    // Entity mode: read from attributes
+    if (this.config.entity) {
+      const boost = this._getEntityAttribute('boost');
+      if (boost === 'on' || boost === true || boost === 'true') return 'BOOST';
+
+      const mode = this._getEntityAttribute('mode');
+      if (mode) {
+        switch (mode.toLowerCase()) {
+          case 'off': return 'OFF';
+          case 'auto': return 'AUTO';
+          case 'manual': return 'MAN';
+          default: return mode.toUpperCase();
+        }
+      }
+      return '';
+    }
+
+    // Legacy mode: check individual entities
     // Check boost first
     if (this.config.boost_entity) {
       const boostState = this._getState(this.config.boost_entity);
@@ -238,6 +276,70 @@ console.info(
     return isNaN(num) ? '--' : num.toFixed(decimals);
   }
 
+  // --------------------------------------------------------------------------
+  // Entity Mode Helpers (for single-entity mode)
+  // --------------------------------------------------------------------------
+
+  _getEntityAttribute(attr) {
+    if (!this.config.entity || !this.hass) return null;
+    const entity = this.hass.states[this.config.entity];
+    return entity?.attributes?.[attr];
+  }
+
+  _getCurrentTemp() {
+    if (this.config.entity) {
+      // Entity mode: current temp is the state
+      const state = this._getState(this.config.entity);
+      if (state && state !== 'unavailable' && state !== 'unknown') {
+        const num = parseFloat(state);
+        return isNaN(num) ? '--' : num.toFixed(1);
+      }
+      return '--';
+    }
+    // Legacy mode: use current_temperature_entity
+    return this._getNumericState(this.config.current_temperature_entity);
+  }
+
+  _getTargetTemp() {
+    if (this.config.entity) {
+      const target = this._getEntityAttribute('target_temp');
+      if (target !== null && target !== undefined) {
+        const num = parseFloat(target);
+        return isNaN(num) ? '--' : num.toFixed(1);
+      }
+      return '--';
+    }
+    return this._getNumericState(this.config.target_temperature_entity);
+  }
+
+  _getHumidity() {
+    if (this.config.entity) {
+      const humidity = this._getEntityAttribute('humidity');
+      if (humidity !== null && humidity !== undefined) {
+        const num = parseFloat(humidity);
+        return isNaN(num) ? '--' : num.toFixed(0);
+      }
+      return '--';
+    }
+    return this._getNumericState(this.config.humidity_entity, 0);
+  }
+
+  _getRoomIconFromEntity() {
+    if (this.config.entity && this.hass) {
+      const entity = this.hass.states[this.config.entity];
+      return entity?.attributes?.icon || this.config.room_icon;
+    }
+    return this.config.room_icon;
+  }
+
+  _getRoomNameFromEntity() {
+    if (this.config.entity) {
+      const name = this._getEntityAttribute('room_name');
+      if (name) return name;
+    }
+    return this.config.room_name || '';
+  }
+
   _getClimateMode() {
     if (!this.config.climate_entity || !this.hass) return null;
     const climate = this.hass.states[this.config.climate_entity];
@@ -256,7 +358,29 @@ console.info(
   _isHeatingNeeded() {
     if (!this.config.show_heating_badge) return false;
 
-    // Check dedicated heating_needed entity first
+    // Entity mode: read from attributes
+    if (this.config.entity) {
+      const heatingNeeded = this._getEntityAttribute('heating_needed');
+      if (heatingNeeded !== null && heatingNeeded !== undefined) {
+        return heatingNeeded === true || heatingNeeded === 'true' || heatingNeeded === 'on' || heatingNeeded === '1';
+      }
+      return false;
+    }
+
+    // Check if custom JavaScript expression is specified
+    if (this.config.heating_needed && this.hass) {
+      try {
+        // Evaluate the expression with access to states object
+        const states = this.hass.states;
+        const condition = new Function('states', `return ${this.config.heating_needed}`);
+        return condition(states);
+      } catch (e) {
+        console.error('ha-clim-card: Error evaluating heating_needed expression:', e);
+        return false;
+      }
+    }
+
+    // Check dedicated heating_needed entity (simple on/off check)
     if (this.config.heating_needed_entity) {
       const state = this._getState(this.config.heating_needed_entity);
       return state === 'on' || state === 'true' || state === '1';
@@ -371,14 +495,14 @@ console.info(
     }
   }
 
-  _handleModePointerCancel(e) {
+  _handleModePointerCancel() {
     if (this._holdTimer) {
       clearTimeout(this._holdTimer);
       this._holdTimer = null;
     }
   }
 
-  _handleModeTap(e) {
+  _handleModeTap() {
     // Check for custom tap action first
     if (this.config.mode_tap_action) {
       this._performAction(this.config.mode_tap_action);
@@ -711,13 +835,15 @@ console.info(
       return html`<ha-card>Loading...</ha-card>`;
     }
 
-    const currentTemp = this._getNumericState(this.config.current_temperature_entity);
-    const targetTemp = this._getNumericState(this.config.target_temperature_entity);
-    const humidity = this._getNumericState(this.config.humidity_entity, 0);
+    const currentTemp = this._getCurrentTemp();
+    const targetTemp = this._getTargetTemp();
+    const humidity = this._getHumidity();
     const mode = this._getModeDisplay();
     const heatingNeeded = this._isHeatingNeeded();
     const humidityColor = this._getHumidityColor(humidity);
     const roomIconColor = this._getRoomIconColor();
+    const roomIcon = this._getRoomIconFromEntity();
+    const roomName = this._getRoomNameFromEntity();
     const valveIcon = this._getValveIcon();
     const valveColor = this._getValveColor();
     const modeButtonClass = this._getModeButtonClass();
@@ -731,14 +857,14 @@ console.info(
             <div class="room-info">
               <ha-icon
                 class="room-icon"
-                icon="${this.config.room_icon}"
+                icon="${roomIcon}"
                 style="color: ${roomIconColor}"
               ></ha-icon>
-              <span class="room-name">${this.config.room_name || ''}</span>
+              <span class="room-name">${roomName}</span>
             </div>
 
             <div class="header-center">
-              ${this.config.show_target && (this.config.target_temperature_entity || this.config.climate_entity) ? html`
+              ${this.config.show_target && (this.config.entity || this.config.target_temperature_entity || this.config.climate_entity) ? html`
                 <div
                   class="target-section"
                   @click=${this._handleTargetTap}
@@ -754,7 +880,7 @@ console.info(
                 </div>
               ` : ''}
 
-              ${this.config.show_humidity && this.config.humidity_entity ? html`
+              ${this.config.show_humidity && (this.config.entity || this.config.humidity_entity) ? html`
                 <div
                   class="humidity"
                   @click=${this._handleHumidityTap}
